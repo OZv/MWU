@@ -1,0 +1,9 @@
+.rlc, .xt5{font-family:"Lucida Sans Unicode","Arial Unicode MS";font-size:100%;line-height:100%}
+.rlc p{margin:1ex}
+.rlc em{font-family:georgia}
+.lcp{margin-bottom:1em;color:maroon;font-family:Georgia,Times;font-size:120%}
+.kzo{display:inline-block;vertical-align:top}
+.kzo p{white-space:nowrap}
+.wed{display:inline-block;cursor:pointer;border:1px solid #cccccc;padding:2px 1ex;font-size:90%;text-align:center;vertical-align:middle;background-color:#f5f5f5;background-image:-webkit-linear-gradient(top,#ffffff,#e6e6e6);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 2px rgba(0,0,0,.05);border-radius:3px}
+.wed:hover{border-right-color:#AAA;border-bottom-color:#AAA}
+.wed:active, .wed:focus{background-color:#e6e6e6;background-image:-webkit-linear-gradient(top,#e6e6e6,#ffffff)}
