@@ -1160,8 +1160,9 @@ def merge(basedir):
                     if not wdef.startswith('@@@') and not thes[uk][1].startswith('@@@'):
                         wdef = merge_d_t(basedir, wdef, thes[uk][1], lns[0])
                         thes[uk] = None
-                fw.write('\n'.join([key, wdef, '</>\n']))
-                words.append(key)
+                if not(wdef.startswith('@@@') and uk in thes):
+                    fw.write('\n'.join([key, wdef, '</>\n']))
+                    words.append(key)
                 del lns[:]
             elif ln:
                 lns.append(ln)
