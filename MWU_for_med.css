@@ -1,11 +1,11 @@
-.mm2{font-family:"Lucida Grande","Lucida Sans Unicode","sans-serif";font-size:100%;line-height:115%}
-.mm2 h2, .mm2 dl, .mm2 dt, .mm2 dd, .mm2 p, .mm2 cite{font-style:normal;margin:0;padding:0;border:none;font-size:100%}
-.mm2 em, .fg9, .beq{font-style:italic;font-family:"Georgia","Times","Times New Roman","serif"}
-.mm2 a{text-decoration:none;color:royalblue}
-.mm2 a:hover{text-decoration:underline}
+.mcg{font-family:"Lucida Grande","Lucida Sans Unicode","sans-serif";font-size:100%;line-height:115%;clear:both}
+.mcg h2, .mcg dl, .mcg dt, .mcg dd, .mcg p, .mcg cite{font-style:normal;margin:0;padding:0;border:none;font-size:100%}
+.mcg em, .fg9, .beq, .gbo i{font-style:italic;font-family:"Georgia","Times","Times New Roman","serif"}
+.mcg a{text-decoration:none;color:royalblue}
+.mcg a:hover{text-decoration:underline}
 .byp{color:#777;font-family:"Lucida Sans Unicode","Arial Unicode MS";font-weight:normal;font-size:85%;white-space:nowrap}
-.k54, .mm2 cite, .byp em{white-space:normal}
-.mm2 cite, .mm2 cite em{color:#777;font-weight:normal}
+.k54, .mcg cite, .byp em{white-space:normal}
+.mcg cite, .mcg cite em{color:#777;font-weight:normal}
 .sxa{padding-left:0.1em;width:15px;vertical-align:text-bottom;cursor:pointer;padding:2px 1px 1px}
 .blr+.blr{margin-top:1em}
 .jk6{margin-bottom:1em}
@@ -19,19 +19,25 @@
 .n6n{font-family:Helvetica;font-weight:bold;color:dimgray;letter-spacing:-1.5px;color:#1C4B8B;position:absolute;left:1ex;width:1em;text-align:center}
 .m6j{display:inline-block;padding:1px 2px;margin-bottom:.2em;color:#777;background-color:palegoldenrod;font-weight:bold;font-family:Helvetica;letter-spacing:1px;line-height:100%}
 .j1b+.j1b, .uay+.uay, .vr0+.ewr{margin-top:.2em}
-.slu, .oxl, .j1b+.m6j, .wgh{margin-top:1ex}
+.slu, .oxl, .j1b+.m6j, .wgh, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
-.mm2 .muj{margin-left:1.3em}
+.mcg .muj{margin-left:1.3em}
 .ikf:before{content:"-";color:black;padding-right:2px}
 .slu b, .ikf, .wgh b, .okj, .vr0 b, .c6t b{color:#194885;font-weight:bold;font-size:105%}
-.zz0{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:1px}
+.zz0{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em{color:navy;font-size:105%;padding-left:1px}
 .uay .zz0, .uay .zfn{margin-left:1em}
 .uay .zz0 q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:.5em}
 .muj .zz0 q:before{left:1.8em}
 .muj div{color:#333}
 .oje .lcw{font-variant:small-caps;font-size:110%;font-style:normal}
-.cuj{border:1px solid #DDD;float:right;margin-bottom:1ex;margin-right:1ex;padding:2px;clear:both;max-width:300px;max-height:400px}
+.mcg .tvb{border:1px solid #DDD;max-width:300px;max-height:400px}
+.gbo{font-family:Helvetica;color:#666;font-size:85%}
+.qa3 .gbo{padding-top:15%}
+.qpv .gbo{text-align:right;max-width:300px;line-height:95%}
+.qa3 .tvb{float:left;margin:0 1ex .2em 1ex}
+.gbo b{color:maroon}
+.qpv{float:right;margin-right:1ex;margin-bottom:1ex}
 h2.t2h{border-bottom:1px #4c8bbb dashed}
 .oxl{clear:both}
 .oje{margin-left:.65em}
@@ -39,7 +45,7 @@ h2.t2h{border-bottom:1px #4c8bbb dashed}
 .fzy{color:#DA3433;font-family:verdana;font-weight:bold;display:inline-block;font-variant:small-caps}
 .lsz{color:#CA0403;font-style:normal;font-family:Helvetica;font-weight:bold}
 .fg9{display:inline;padding-left:1ex;color:teal}
-.okj, .co8, .mm2 cite{font-size:85%;font-family:Helvetica}
+.okj, .co8, .mcg cite{font-size:85%;font-family:Helvetica}
 .lfe{font-size:90%;color:#666}
 .eyx{display:inline-block}
 .byp em, .lej{font-style:italic;font-size:90%;font-family:Helvetica;letter-spacing:.5px}
