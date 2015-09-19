@@ -349,7 +349,7 @@ class downloader:
                 for ln in fileinput.input(file):
                     ln = ln.strip()
                     if ln == '</>':
-                        p = re.compile(r'<sup[^<>]*>\s*(\d+)\s*</sup>')
+                        p = re.compile(r'(?:[^\s>]|^)\s*<sup[^<>]*>\s*(\d+)\s*</sup>\s*')
                         m = p.search(lns[0])
                         key = self.strip_key(lns[0])
                         sk = m.group(1) if m else ''
@@ -599,10 +599,10 @@ class dic_downloader(downloader):
         return self.strip_key(word)
 
     def strip_key(self, word):
-        p = re.compile(r'<sup[^<>]*>\s*\d+\s*</sup>')
+        p = re.compile(r'(?:^<sup[^<>]*>\s*\d+\s*</sup>)|(?:<sup[^<>]*>\s*\d+\s*</sup>\s*$)')
         word = p.sub(r'', word)
-        p = re.compile(r'<sub[^<>]*>\s*(\d+)\s*</sub>')
-        word = p.sub(r'\1', word)
+        p = re.compile(r'<su([bp])[^<>]*>\s*(\d+)\s*</su\1>')
+        word = p.sub(r'\2', word)
         p = re.compile(r'<span class="(?:unicode|fr|sc)">([^<>]*)</span>', re.I)
         return p.sub(r'\1', word).strip()
 
