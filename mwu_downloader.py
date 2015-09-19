@@ -121,7 +121,7 @@ class downloader:
     def postdata(self, start, show):
         pass
 
-    def makeword(self, page, words):
+    def makeword(self, page, words, pic):
         pass
 
     def strip_key(self, word):
@@ -136,7 +136,7 @@ class downloader:
     def make_pron(self, appendix):
         pass
 
-    def format_entry(self, key, line, crefs, links, appendix):
+    def format_entry2(self, key, line, crefs, links, appendix):
         pass
 
     def load_appendix(self, dir):
@@ -146,14 +146,12 @@ class downloader:
         pass
 
     def cleansp(self, html):
-        p = re.compile(r'\s+')
+        p = re.compile(r'\s{2,}')
         html = p.sub(' ', html)
         p = re.compile(r'<!--[^<>]+?-->')
         html = p.sub('', html)
         p = re.compile(r'\s*<br/?>\s*')
         html = p.sub('<br>', html)
-        p = re.compile(r'(\s*<br>\s*)*(<hr[^>]*>)(\s*<br>\s*)*', re.I)
-        html = p.sub(r'\2', html)
         p = re.compile(r'(\s*<br>\s*)*(<(?:/?(?:div|p)[^>]*|br)>)(\s*<br>\s*)*', re.I)
         html = p.sub(r'\2', html)
         p = re.compile(r'\s*(<(?:/?(?:div|p|ul|li)[^>]*|br)>)\s*', re.I)
@@ -234,7 +232,7 @@ class downloader:
             for j in xrange(0, last):
                 pl.append(((i+1)*30+bg, j))
         words, crefs, logs, count= [], OrderedDict(), [], 1
-        leni = len(pl)
+        leni, pic = len(pl), OrderedDict()
         while leni:
             for start, pos in pl:
                 if count % 10 == 0:
@@ -246,7 +244,7 @@ class downloader:
                     page = self.postdata(start, pos)
                     print '+',
                     if page:
-                        word = self.makeword(page, words)
+                        word = self.makeword(page, words, pic)
                         if word:
                             crefs[''.join([str(start), '-', str(pos)])] = word
                             count += 1
@@ -312,7 +310,6 @@ class downloader:
         return buf
 
     def combinefiles(self, dir):
-        print "combining files..."
         times = 0
         for d in os.listdir(fullpath(dir)):
             if path.isdir(fullpath(''.join([dir, d, path.sep]))):
@@ -327,6 +324,7 @@ class downloader:
         buf, words, crefs, links, logs = OrderedDict(), [], OrderedDict(), OrderedDict(), []
         refs = getwordlist('cref.txt', dir)
         print "%s totally." % info(len(refs), 'raw item')
+        print "Formatting files..."
         for k, v in refs:
             v = self.strip_key(v)
             crefs[v.lower()] = v
@@ -335,13 +333,18 @@ class downloader:
                 crefs[k.strip().lower()] = v
         appendix = self.load_appendix(dir)
         self.set_repcls()
+        pool, args = Pool(30), []
+        for i in xrange(1, times+1):
+            args.append((self, ''.join([dir, '%d'%i, path.sep])))
+        pool.map(formatter, args)
+        print "Start to combine files at %s" % datetime.now()
         cn = 'MWT' if self.diff=='t' else self.DIC_T
         fm = ''.join([dir, cn, path.extsep, 'txt'])
         fw = open(fullpath(fm), 'w')
         try:
             for i in xrange(1, times+1):
                 sdir = ''.join([dir, '%d'%i, path.sep])
-                file = fullpath('rawhtml.txt', base_dir=sdir)
+                file = fullpath('formatted.txt', base_dir=sdir)
                 lns = []
                 for ln in fileinput.input(file):
                     ln = ln.strip()
@@ -351,15 +354,16 @@ class downloader:
                         key = self.strip_key(lns[0])
                         sk = m.group(1) if m else ''
                         if len(buf) == 0:
-                            buf[key] = [(sk, self.format_entry(key, lns[1], crefs, links, appendix))]
+                            buf[key] = [(sk, self.format_entry2(key, lns[1], crefs, links, appendix))]
                         elif key in buf:
-                            buf[key].append((sk, self.format_entry(key, lns[1], crefs, links, appendix)))
+                            buf[key].append((sk, self.format_entry2(key, lns[1], crefs, links, appendix)))
                         else:
                             buf = self.__dump_buf(fw, words, cn, buf)
-                            buf[key] = [(sk, self.format_entry(key, lns[1], crefs, links, appendix))]
+                            buf[key] = [(sk, self.format_entry2(key, lns[1], crefs, links, appendix))]
                         del lns[:]
                     elif ln:
                         lns.append(ln)
+                os.remove(file)
             if buf:
                 self.__dump_buf(fw, words, cn, buf, True)
         finally:
@@ -382,6 +386,25 @@ class downloader:
         if logs:
             mod = self.__mod(path.exists(fullpath('log.txt', base_dir=dir)))
             dump('\n'.join(logs), ''.join([dir, 'log.txt']), mod)
+
+
+def formatter((dic, sdir)):
+    lns = []
+    file = fullpath('rawhtml.txt', base_dir=sdir)
+    fw = open(fullpath('formatted.txt', base_dir=sdir), 'w')
+    try:
+        for ln in fileinput.input(file):
+            ln = ln.strip()
+            if ln == '</>':
+                key = dic.strip_key(lns[0])
+                line = dic.format_entry(key, lns[1])
+                fw.write('\n'.join([lns[0], line, '</>\n']))
+                del lns[:]
+            elif ln:
+                lns.append(ln)
+    finally:
+        fw.close()
+        print sdir
 
 
 def f_start((obj, arg)):
@@ -518,20 +541,40 @@ class dic_downloader(downloader):
         page = p.sub(r'\1b', page)
         return page
 
-    def __repimg(self, m, base_url):
-        rpath, fnm = m.group(2), m.group(3)
+    def __repimg(self, rpath, fnm, base_url):
         file =''.join([self.DIC_T, path.sep, self.__diff, 'p', path.sep, fnm])
         if not path.exists(fullpath(file)):
             dump(self.getpage(''.join([rpath, fnm]), base_url), file, 'wb')
-        if rpath.find('/med') > -1:
-            cls = 'cuj'
-        elif rpath.find('/math') > -1:
+        if rpath.find('/math') > -1:
             cls = 's6p'
         else:
             cls = 'tvb'
-        return ''.join([m.group(1), '"p/', fnm, '" class="', cls, '"'])
+        return ''.join(['src="p/', fnm, '" class="', cls, '"'])
 
-    def makeword(self, page, words):
+    def __chgimg(self, m, pic):
+        hp = m.group(2)
+        if hp in pic:
+            return pic[hp]
+        else:
+            link = ''.join([m.group(1), hp])
+            page, div = self.__preformat(self.getpage(link, self.__origin)).strip(), None
+            if self.__diff == 'u':
+                p = re.compile(r'<div class="well content-body">\s*<div class="art">\s*<div class="art-image">\s*(<img [^<>]+>)\s*</div>\s*(<div class="art-caption">.+?</div>)\s*</div>\s*</div>', re.I)
+                s = p.search(page)
+                if s:
+                    div = ''.join([s.group(1), s.group(2)])
+                else:
+                    page = self.__preformat(self.getpage(''.join(['/art/dict/', hp[:-1]]), self.__origin)).strip()
+            if not div:
+                p = re.compile(r'<div class="well content-body">(.+?)</div>', re.I)
+                div = p.search(page).group(1)
+            p = re.compile(r'''(?<=<img )[^<>]*?src=['"](?:/art/(?:dict|mwu|med)/)?([^<>/'"]+)[^<>]+(?=>)''', re.I)
+            div = p.sub(lambda n: self.__repimg(m.group(1), n.group(1), self.__origin), div)
+            div = ''.join(['<div class="qpv">', div, '###</div>'])
+            pic[hp] = div
+            return div
+
+    def makeword(self, page, words, pic):
         page = self.__preformat(page)
         p = re.compile(r'<!--\s*HEADWORD\s*-->\s*(<div class="wrapper">\s*<div\s+class="hdword">.+?</div>)\s*<!--', re.I)
         m1 = p.search(page)
@@ -543,13 +586,15 @@ class dic_downloader(downloader):
         if not m2 or m2.group(1).find('id="mwEntryData"')<0:
             return None
         p = re.compile(r'<div class="hdword">\s*(.+?)\s*</div>', re.I)
-        word = p.search(m1.group(1)).group(1).replace('&amp;', '&').replace('&#183;', '').replace('\xE2\x80\x93', '-')
+        word = p.search(m1.group(1)).group(1).replace('&amp;', '&').replace('\xE2\x80\x93', '-')
+        p = re.compile(r'\s*&#183;\s*', re.I)
+        word = p.sub(r'', word)
         worddef = ''.join([m1.group(1), m2.group(1)]).strip()
         if self.__diff != 't':
-            p = re.compile(r'(?<=<img )[^<>]*?(src=)"(/art/(?:dict|mwu|med)/)thumb/([^<>/"]+)[^<>]+(?=>)', re.I)
-            worddef = p.sub(lambda m: self.__repimg(m, self.__origin), worddef)
-            p = re.compile(r'(?<=<img )[^<>]*?(src=)"(/math/)([^<>/"]+)[^<>]+(?=>)', re.I)
-            worddef = p.sub(lambda m: self.__repimg(m, 'http://www.merriam-webster.com'), worddef)
+            p = re.compile(r'<a href="(/art/(?:dict|mwu|med)/)([^<>/"]+)"[^<>]*>\s*<img[^<>]+>\s*</a>', re.I)
+            worddef = p.sub(lambda m: self.__chgimg(m, pic), worddef)
+            p = re.compile(r'(?<=<img )[^<>]*?src="(/math/)([^<>/"]+)[^<>]+(?=>)', re.I)
+            worddef = p.sub(lambda m: self.__repimg(m.group(1), m.group(2), 'http://www.merriam-webster.com'), worddef)
         words.append((word, worddef))
         return self.strip_key(word)
 
@@ -721,6 +766,23 @@ class dic_downloader(downloader):
             tables[reft] = self.__make_tbl(reft)
         return ''.join(['class="ga0" ', m.group(1), 'entry://', reft, m.group(2), m.group(3)])
 
+    def __fmt_illu(self, m):
+        text = m.group(2)
+        p = re.compile(r'<body[^<>]*>\s*(?:<script[^>]*>.*?</script>\s*)?(.+?)\s*</body>', re.I)
+        sm = p.search(text)
+        if sm:
+            text = sm.group(1)
+            p = re.compile(r'<p>\s*(<img src="p/[^<>"]+"[^>]*>)\s*<br/?>\s*(.+?)\s*</p>', re.I)
+            text = p.sub(r'\1<div class="gbo">\2</div>', text)
+        p = re.compile(r'(</?)(?:it?|em)(?=>)', re.I)
+        text, n = p.subn(r'\1b', text)
+        p = re.compile(r'<b>(\s*or\s*)</b>', re.I)
+        text, i = p.subn(r'<i>\1</i>', text)
+        if n%2 != 0:
+            print text#for debug
+        cls = 'qa3">' if (n-i)>6 else m.group(1)
+        return ''.join([cls, text])
+
     def __make_illu(self, link, illu):
         if not self.session:
             self.login()
@@ -743,7 +805,7 @@ class dic_downloader(downloader):
         body = p.sub(r'\1b', m.group(1))
         p = re.compile('(?<=<img src=)[\'"]([^<>\'"]+?\.gif)[^>]+(?=>)', re.I)
         fnm = p.search(body).group(1)
-        body = p.sub(r'"p/\1"  style="margin:1em;max-width:90%"', body)
+        body = p.sub(r'"p/\1" style="margin:1em;max-width:90%"', body)
         folder = ''.join([self.DIC_T, path.sep, self.diff, 'p', path.sep])
         imgpath = fullpath(folder)
         if not path.exists(imgpath):
@@ -771,7 +833,7 @@ class dic_downloader(downloader):
         'fl-xtra': 'fg9', 'section-content etymology': 'oje', 'ss': 'qms',
         'vt': 'm6j', 'd dxnl': 'mxc', 'dx': 'nh6', 'sr synonym-discussion': 'kyc',
         'section inf-forms': 'c6t', 'section variants': 'vr0', 'd': 'uay',
-        'sub-well usage-discussion': 'rgk'},
+        'sub-well usage-discussion': 'rgk', 'art-caption': 'gbo'},
         'span': {'ssens': 'xsx', 'vi': 'zz0', 'sc': 'lcw', 'sn': 'lsz',
         'text': 'fzy', 'qword': 'sq2', 'pr': 'byp', 'ph': 'plh', 'fr': 'co8',
         'ibar': 'k7r', 'unicode': 'u6u', 'illust': 'ac3', 'code_uhorn': 'uy4',
@@ -798,7 +860,7 @@ class dic_downloader(downloader):
         else:
             return m.group(0)
 
-    def format_entry(self, key, line, crefs, links, appendix):
+    def format_entry(self, key, line):
         line = line.replace('\xC2\xA0', ' ')
         p = re.compile(r'xmlns:mwref="http://www\.m-w\.com/mwref"\s*', re.I)
         line = p.sub(r'', line)
@@ -818,10 +880,6 @@ class dic_downloader(downloader):
         line = p.sub(r'\1', line)
         p = re.compile(r'([\[\(]\s*)(</a>)', re.I)
         line = p.sub(r'\2\1', line)
-        p = re.compile(r'(<a (?:class="[^<>"]+"\s*)?href=")(?:/collegiate/|/unabridged/|id%3A)?([^<>"]+?)\s*"((?:\s*class="[^<>"]+")?)\s*>\s*(.+?)\s*(</a>)', re.I)
-        line = p.sub(lambda m: self.__replink(m, crefs), line)
-        p = re.compile(r'<a href="/[^<>]+>\s*(<img [^<>]+>)\s*</a>', re.I)
-        line = p.sub(r'\1', line)
         p = re.compile(r'<a href="(?:/collegiate/)"/>,?\s*(?=<a href=")', re.I)
         line = p.sub(r'', line)
         p = re.compile(r'<div( class=")snum(">\d+</)div>\s*(<div[^>]*>)\s*', re.I)
@@ -842,13 +900,13 @@ class dic_downloader(downloader):
             line = p.sub(r'\1 class="hcs"', line)
         else:
             jsn = 'dcq' if self.__diff=='m' else 'dzp'
+            p = re.compile(r'(?<=<div class=")(qpv">)(.+?)(?=###</div>)', re.I)
+            line = p.sub(self.__fmt_illu, line)
             if self.__diff == 'u':
                 p = re.compile(r'<div class="scnt"/>', re.I)
                 line = p.sub(r'', line)
             p = re.compile(r'(<div class="[^<>"]+")\s*style="[^<>]*"\s*(?=>)', re.I)
             line = p.sub(r'\1', line)
-            p = re.compile(r'<div class="section variants">(.+?)</div>', re.I)
-            self.__regvr(p.findall(line), key, links)
             p = re.compile(r'\s*<div class="section" data-id="definition">\s*(?:<div id="wordclick" class="wordclick">\s*)?(?=<div [^>]*?id="mwEntryData")', re.I)
             line = p.sub(r'', line)
             if self.__diff == 'm':
@@ -856,6 +914,7 @@ class dic_downloader(downloader):
                 line = p.sub(r'\1', line)
                 p = re.compile(r'(?<=<div)>\s*<em>\s*([^<>]+)\s*</em>\s*(?=</div>)', re.I)
                 line = p.sub(r' class="m6j">\1', line)
+                line = line.replace('<img class="math formula" src="/math/"/>', '')
             p = re.compile(r'(<div\s+[^<>]*?id="mwEntryData"[^<>]*>.+?)\s*(?:<!--\s*SECTION\s*-->|$)', re.I)
             line = p.sub(lambda m: self.__rm_div(m.group(1)), line)
             p = re.compile(r'<(script|style)\b.+?</\1>', re.I)
@@ -888,8 +947,6 @@ class dic_downloader(downloader):
             line = p.sub(r'/', line)
             p = re.compile(r'(?<=<span class="pr">)(\s*/.+?/\s*)(?=</span>)', re.I)
             line = p.sub(self.__adjwp, line)
-            p = re.compile(r'(<div class="d?r">)\s*\xE2\x80\x94\s*(<b)(.+?</div>)', re.I)
-            line = p.sub(lambda m: self.__reprlt(m, key, links), line)
             p = re.compile(r'(?<=<div class="f1">)([^<>]+)(?=</div>)', re.I)
             q = re.compile('(?<=\s)(or)(?=\s)')
             line = p.sub(lambda m: q.sub(r'<i>\1</i>', m.group(1)), line)
@@ -905,8 +962,6 @@ class dic_downloader(downloader):
             line = p.sub(r' \1', line)
             p = re.compile(r'<em( class="sn">\s*(?:[^<>]|a[^<>])\s*</)em>', re.I)
             line = p.sub(r'<span\1span>', line)
-            p = re.compile(r'(<a href=")(?:/collegiate/|/unabridged/|id%3A)?([^<>"]+?)(?:\[\d+\])?"(\s*class="d_link")\s*onclick="_gaq\.push[^<>]+>(.+?)(</a>)', re.I)
-            line = p.sub(lambda m: self.__replink(m, crefs), line)
             p = re.compile(r'<li([^<>]*>)\s*&lt;\s*(.+?)\s*&gt;\s*(</)li>', re.I)
             line = p.sub(r'<div\1<q>\2</q>\3div>', line)
             p = re.compile(r'<li>\s*(?:<span>\s*)?<span class="quote">(.+?</)span>\s*(?:</span>\s*)?</li>', re.I)
@@ -929,12 +984,22 @@ class dic_downloader(downloader):
             line = p.sub(r'\1', line)
             p = re.compile(r'<!--[^<>]+?-->')
             line = p.sub('', line)
-            p = re.compile(r'<div class="[^<>]*?data-id="artwork"[^<>]*>\s*<div class="section-content">\s*<div class="sub-well">\s*(<img[^<>]+>)(?:\s*</div>\s*){3}', re.I)
+            p = re.compile(r'<div class="[^<>]*?data-id="artwork"[^<>]*>\s*<div class="section-content">\s*<div class="sub-well">\s*(<div class="qpv">.+?###</div>)(?:\s*</div>\s*){3}', re.I)
             m = p.search(line)
             q = re.compile(r'(?=<div class="d">)', re.I)
             if m:
-                line = q.sub(m.group(1), line, 1)
+                line, n = q.subn(m.group(1), line, 1)
+                assert n==1
             line = p.sub(r'', line)
+            p = re.compile(r'<div class="[^<>]*?data-id="artwork"[^<>]*>\s*<div class="section-content">\s*<div class="sub-well">\s*(<div class="qa3">.+?###</div>)(?:\s*</div>\s*){3}', re.I)
+            m = p.search(line)
+            q = re.compile(r'(?=<div class="[^<>"]+">\s*<h2 class="toggle">)', re.I)
+            if m:
+                line, n = q.subn(m.group(1), line, 1)
+                if n:
+                    line = p.sub(r'', line)
+                else:
+                    line = p.sub(r'\1', line)
             p = re.compile(r'<div class="[^<>]*?data-id="artwork"', re.I)
             if p.search(line):
                 raise AssertionError('%s: img has not formatted' % key)
@@ -948,16 +1013,6 @@ class dic_downloader(downloader):
             line = p.sub(r'<span\1okj\2span>', line)
             p = re.compile(r'(?<=<div class=")syn synonym-discussion(">\s*(?:<div>)?\s*)(?:<b>Synonym Discussion:</b>)?\s*(.+?)(?=</div>)', re.I)
             line = p.sub(r'ocp\1<span class="iom">Synonym discussion</span><div class="xtc">\2</div>', line)
-            p = re.compile(r'(?<=<a )(?:class="table-link"\s*)?(href=")/table/(?:dict|unabridged)/[^<>]+\.htm(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
-            line = p.sub(lambda m: self.__reptl(m, appendix[0]), line)
-            if self.__diff == 'm':
-                p = re.compile(r'(?<=<a )(href=")/table/dict/[^<>]+\.htm" class="lookup table(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
-                line = p.sub(lambda m: self.__reptl(m, appendix[0]), line)
-                line = line.replace('<img class="math formula" src="/math/"/>', '')
-            p = re.compile(r'(?<=<a )(href=")(/art/(?:dict|unabridged)/[^<>]+\.htm)(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
-            line = p.sub(lambda m: self.__repil(m, appendix[1]), line)
-            p = re.compile(r'<a href="/art/(?:dict|unabridged)/[^<>]+\.htm">([^<>]+?)</a>', re.I)
-            line = p.sub(r'<span>\1</span>', line)
             p = re.compile(r'<em>(of [^<>]+)</em>(?=\s*<b>\s*:)', re.I)
             line = p.sub(r'<span class="beq">\1</span>', line)
             p = re.compile(r'(?<=</div>)\s*<em>(of [^<>]+)</em>(?=\s*<div)', re.I)
@@ -990,10 +1045,6 @@ class dic_downloader(downloader):
         line = p.sub(r'<span class="bld"><span>(</span>\1<span>)</span></span>', line)
         p = re.compile(r'<em( class="sc">.+?</)em>', re.I)
         line = p.sub(r'<span\1span>', line)
-        p = re.compile(r'<a [^<>]*?href="(?:/|http://)|<img [^<>]*?src="/', re.I)
-        if p.search(line):
-            dump(line, 't.txt')#for check&debug
-            raise AssertionError('%s : link/img not transformed' % key)
         line = self.cleansp(line)
         p = re.compile(r'(?<=<)(span|div|a|b|h2|ul|em|ol)([^<>]*? class=")([^<>"]+?)\s*(?=")', re.I)
         line = p.sub(self.__repcls, line)
@@ -1012,6 +1063,29 @@ class dic_downloader(downloader):
         line = line.replace('<div class="eyx">', ' <div class="eyx">')
         return line
 
+    def format_entry2(self, key, line, crefs, links, appendix):
+        p = re.compile(r'(<a (?:class="[^<>"]+"\s*)?href=")(?:/collegiate/|/unabridged/|id%3A)?([^<>"]+?)\s*"((?:\s*class="[^<>"]+")?)\s*>\s*(.+?)\s*(</a>)', re.I)
+        line = p.sub(lambda m: self.__replink(m, crefs), line)
+        if self.__diff != 't':
+            p = re.compile(r'<div class="vr0">(.+?)</div>', re.I)
+            self.__regvr(p.findall(line), key, links)
+            p = re.compile(r'(<a href=")(?:/collegiate/|/unabridged/|id%3A)?([^<>"]+?)(?:\[\d+\])?"(\s*class="qx0")\s*onclick="_gaq\.push[^<>]+>(.+?)(</a>)', re.I)
+            line = p.sub(lambda m: self.__replink(m, crefs), line)
+            p = re.compile(r'(<div class="(?:slu|wgh)">)\s*\xE2\x80\x94\s*(<b)(.+?</div>)', re.I)
+            line = p.sub(lambda m: self.__reprlt(m, key, links), line)
+            p = re.compile(r'(?<=<a )(?:class="table-link"\s*)?(href=")/table/(?:dict|unabridged)/[^<>]+\.htm(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
+            line = p.sub(lambda m: self.__reptl(m, appendix[0]), line)
+            if self.__diff == 'm':
+                p = re.compile(r'(?<=<a )(href=")/table/dict/[^<>]+\.htm" class="lookup table(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
+                line = p.sub(lambda m: self.__reptl(m, appendix[0]), line)
+            p = re.compile(r'(?<=<a )(href=")(/art/(?:dict|unabridged)/[^<>]+\.htm)(">)\s*([^<>]+?)\s*(?=</a>)', re.I)
+            line = p.sub(lambda m: self.__repil(m, appendix[1]), line)
+        p = re.compile(r'<a [^<>]*?href="(?:/|http://)|<img [^<>]*?src="/', re.I)
+        if p.search(line):
+            dump(line, 't.txt')#for check&debug
+            raise AssertionError('%s : link/img not transformed' % key)
+        return line
+
     def make_entry(self, cn, v):
         if len(v) > 1:
             line = ''
@@ -1019,12 +1093,14 @@ class dic_downloader(downloader):
                 line = ''.join([line, '<div class="blr">', sv, '</div>'])
         else:
             line = v[0][1]
-        ps, pd = r'<img\s+src="', r'\.gif"\s*class="tvb">'
+        ps, pd = r'<div class="(?:qpv|qa3)">\s*<img src="', r'\.gif".+?###</div>'
         p = re.compile(''.join([ps, r'([^<>"]+?)', pd]))
         m = p.search(line)
         if m:
             p = re.compile(''.join([ps, m.group(1), pd]))
             line = ''.join([line[:m.end()], p.sub(r'', line[m.end():])])
+        p = re.compile(r'(<div class="(?:qpv|qa3)">.+?)###(?=</div>)', re.I)
+        line = p.sub(r'\1', line)
         nojs = (line.find('onclick="')<0)
         if self.diff == 't':
             id, cls = '', 'm3s'
@@ -1039,7 +1115,8 @@ class dic_downloader(downloader):
                 id = 'bty'
             else:
                 id, jsn = 'mxs', 'dcq'
-            cls, src = 'mm2', '' if nojs else ''.join(['<script type="text/javascript"src="w1.js"></script><script>if(typeof(', jsn, ')=="undefined"){var _l=document.getElementsByTagName("link");var _r=/',
+            cls = 'mcg' if self.__diff=='m' else 'mm2'
+            src = '' if nojs else ''.join(['<script type="text/javascript"src="w1.js"></script><script>if(typeof(', jsn, ')=="undefined"){var _l=document.getElementsByTagName("link");var _r=/',
             self.DIC_T, '.css$/;for(var i=_l.length-1;i>=0;i--)with(_l[i].href){var _m=match(_r);if(_m&&_l[i].id=="', id, '"){document.write(\'<script src="\'+replace(_r,"w1.js")+\'"type="text/javascript"><\/script>\');break;}}}</script>'])
         id = '' if (self.diff=='t' or nojs) else ''.join(['id="', id, '"'])
         line = ''.join(['<link ', id, 'rel="stylesheet"href="', cn, '.css"type="text/css"><div class="', cls, '">', line, src, '</div>'])
