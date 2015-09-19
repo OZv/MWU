@@ -19,7 +19,9 @@
 .blr+.blr .jk6, .kud .xsx, .c6t{margin-bottom:.2em}
 .iye{display:inline;margin-right:.3em;color:blue;font-size:120%;font-weight:bold}
 .iye sup{color:black;font-size:70%;font-weight:normal;-webkit-user-select:none}
+.iye .co8 sup{color:blue;font-size:smaller;font-weight:bold;-webkit-user-select:auto}
 .iye span:before, .ikf span:before, .bsf div span:before, .vr0 b span:before, .xsx b span:before{content:"\000B7";font-weight:normal}
+.iye span[class]:before, .ikf span[class]:before, .bsf div span[class]:before, .vr0 b span[class]:before, .xsx b span[class]:before{content:""}
 .eyx, .wsm{font-weight:bold;color:sienna;font-family:"Trebuchet MS";font-size:95%}
 .eyx i, .wsm i{font-weight:normal;color:#777;font-family:"Georgia","Times","Times New Roman","serif";font-size:90%}
 .m6j{display:inline-block;padding:1px 2px;margin-bottom:.2em;color:#777;background-color:palegoldenrod;font-weight:bold;font-family:Helvetica;letter-spacing:1px;line-height:100%}
@@ -57,11 +59,10 @@
 .mm2 .tvb{border:1px solid #DDD;max-width:240px;max-height:240px}
 .gbo{font-family:Helvetica;color:#666;font-size:85%}
 .qa3 .gbo{padding-top:5%}
-.qpv .gbo{text-align:right;max-width:240px;line-height:95%}
+.mm2 .qpv .gbo{text-align:right;max-width:240px;line-height:95%}
 .qa3 .tvb{float:left;margin:0 1ex .2em 1ex}
 .gbo b{color:maroon}
 .qpv{float:right;margin-right:1ex;margin-bottom:1ex}
-.qpv{clear:both;max-width:240px;font-family:Helvetica;font-color:#777;font-size:85%}
 h2.t2h{border-bottom:1px #4c8bbb dashed}
 .xkm, .ihb, .oxl, .rmr, .fkf, .uea{clear:both}
 .xkm .cdw{font-family:Helvetica;margin-left:.5em;counter-reset:ql9}
