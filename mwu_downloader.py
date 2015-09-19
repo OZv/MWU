@@ -349,7 +349,7 @@ class downloader:
                 for ln in fileinput.input(file):
                     ln = ln.strip()
                     if ln == '</>':
-                        p = re.compile(r'(?:[^\s>]|^)\s*<sup[^<>]*>\s*(\d+)\s*</sup>\s*')
+                        p = re.compile(r'(?:[^\s>]|^)\s*<sup[^<>]*>\s*(\d+)\s*</sup>')
                         m = p.search(lns[0])
                         key = self.strip_key(lns[0])
                         sk = m.group(1) if m else ''
