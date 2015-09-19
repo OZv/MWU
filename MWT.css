@@ -14,7 +14,7 @@
 .n6n{font-family:Helvetica;color:#1C4B8B;font-weight:bold;letter-spacing:-1.5px;position:absolute;left:1ex;width:1em;text-align:center}
 .j1b+.j1b{margin-top:.2em}
 .m3s .j1b .muj{margin-left:1.2em;counter-reset:efi}
-.zz0{display:block;font-size:95%;font-family:Helvetica;color:#369;letter-spacing:1px}
+.zz0{display:block;font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em{color:navy;font-size:105%;padding-left:1px}
 .zz0{margin-left:1em}
 .zz0 q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:.5em}
@@ -37,4 +37,3 @@
 .kie{display:inline-block}
 .ltr img{cursor:pointer;width:16px;vertical-align:text-bottom}
 .ltr img:hover{background-color:#F4F6FA}
-
