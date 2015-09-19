@@ -1,6 +1,6 @@
-.wdu, .m3s, .mm2{font-family:"Lucida Grande","Lucida Sans Unicode","sans-serif";font-size:100%;line-height:115%}
+.wdu, .m3s, .mm2{font-family:"Lucida Grande","Lucida Sans Unicode","sans-serif";font-size:100%;line-height:115%;clear:both}
 .mm2 h2, .mm2 dl, .mm2 dt, .mm2 dd, .mm2 p, .mm2 cite{font-style:normal;margin:0;padding:0;border:none;font-size:100%}
-.m3s em, .mm2 em, .sq2, .fg9, .azf, .beq{font-style:italic;font-family:"Georgia","Times","Times New Roman","serif"}
+.m3s em, .mm2 em, .sq2, .fg9, .azf, .beq, .gbo i{font-style:italic;font-family:"Georgia","Times","Times New Roman","serif"}
 .m3s a, .mm2 a{text-decoration:none;color:royalblue}
 .m3s a:hover, .mm2 a:hover{text-decoration:underline}
 .byp, .iws{color:#777;font-family:"Lucida Sans Unicode","Arial Unicode MS";font-weight:normal;font-size:85%;white-space:nowrap}
@@ -30,12 +30,12 @@
 .n6n, .znu{font-family:Helvetica;font-weight:bold;color:dimgray;letter-spacing:-1.5px}
 .n6n{color:#1C4B8B;position:absolute;left:1ex;width:1em;text-align:center}
 .j1b+.j1b, .uay+.uay, .vr0+.ewr{margin-top:.2em}
-.j1b+.m6j, .slu, .xkm, .ihb, .oxl, .rmr, .fkf, .uea, .wgh, .ocp, .ac3, .qms, .bfw, .bsf, .nh6, .kyc, .zb4, .obg, .mxc, .xpv, .nvq, .y4l{margin-top:1ex}
+.j1b+.m6j, .slu, .xkm, .ihb, .oxl, .rmr, .fkf, .uea, .wgh, .ocp, .ac3, .qms, .bfw, .bsf, .nh6, .kyc, .zb4, .obg, .mxc, .xpv, .nvq, .y4l, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
 .mm2 .muj{margin-left:1.3em}
 .ikf:before{content:"-";color:black;padding-right:2px}
 .slu b, .ikf, .wgh b, .okj, .wym, .vr0 b, .c6t b, .xtc .lcw{color:#194885;font-weight:bold;font-size:105%}
-.zz0, .zfn{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:1px}
+.zz0, .zfn{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em, .zfn em, .xkm q em, .sq2{color:navy;font-size:105%;padding-left:1px}
 .uay .zz0, .uay .zfn, .xtc .zz0, .rgk .zz0, .rgk .zfn{margin-left:1em}
 .uay .zz0 q:before, .uay .zfn q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:.5em}
@@ -54,7 +54,14 @@
 .muj div{color:#333}
 .hfo{color:#36A;font-size:105%}
 .oje .lcw, .iye .lcw{font-variant:small-caps;font-size:120%;font-style:normal}
-.tvb{border:1px solid #DDD;float:right;margin-bottom:1ex;margin-right:1ex;padding:2px;clear:both;max-width:240px;max-height:240px}
+.mm2 .tvb{border:1px solid #DDD;max-width:240px;max-height:240px}
+.gbo{font-family:Helvetica;color:#666;font-size:85%}
+.qa3 .gbo{padding-top:5%}
+.qpv .gbo{text-align:right;max-width:240px;line-height:95%}
+.qa3 .tvb{float:left;margin:0 1ex .2em 1ex}
+.gbo b{color:maroon}
+.qpv{float:right;margin-right:1ex;margin-bottom:1ex}
+.qpv{clear:both;max-width:240px;font-family:Helvetica;font-color:#777;font-size:85%}
 h2.t2h{border-bottom:1px #4c8bbb dashed}
 .xkm, .ihb, .oxl, .rmr, .fkf, .uea{clear:both}
 .xkm .cdw{font-family:Helvetica;margin-left:.5em;counter-reset:ql9}
