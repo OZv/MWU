@@ -30,23 +30,22 @@
 .zrn, .fng, .kyl, .gkc, .qf5, .epi, .mhv, .rkt, .ond, .ipn, .rm1, .rjq{}
 .uay .zz0, .xtc .zz0, .rgk .zz0, .xsx, .zfn, .zb4, .obg, .xpv, .smp{display:block}
 .n6n, .znu{font-family:Helvetica;font-weight:bold;color:dimgray;letter-spacing:-1.5px}
-.n6n{color:#1C4B8B;position:absolute;left:1ex;width:1em;text-align:center}
+.n6n{color:#1C4B8B;position:absolute;left:-1.1em}
 .j1b+.j1b, .uay+.uay, .vr0+.ewr{margin-top:.2em}
 .j1b+.m6j, .slu, .xkm, .ihb, .oxl, .rmr, .fkf, .uea, .wgh, .ocp, .ac3, .qms, .bfw, .bsf, .nh6, .kyc, .zb4, .obg, .mxc, .xpv, .nvq, .y4l, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
-.mm2 .muj{margin-left:1.3em}
+.mm2 .muj{margin-left:1.3em;position:relative}
 .ikf:before{content:"-";color:black;padding-right:2px}
 .slu b, .ikf, .wgh b, .okj, .wym, .vr0 b, .c6t b, .xtc .lcw{color:#194885;font-weight:bold;font-size:105%}
 .zz0, .zfn{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em, .zfn em, .xkm q em, .sq2{color:navy;font-size:105%;padding-left:1px}
-.uay .zz0, .uay .zfn, .xtc .zz0, .rgk .zz0, .rgk .zfn{margin-left:1em}
-.uay .zz0 q:before, .uay .zfn q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:.5em}
-.muj .zz0 q:before, .muj .zfn q:before{left:1.8em}
+.uay .zz0, .uay .zfn, .xtc .zz0, .rgk .zz0, .rgk .zfn{margin-left:1em;position:relative}
+.uay .zz0 q:before, .uay .zfn q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:-1.1em}
 .tec, .poy, .ycv, .a3d, .foa{margin:.2em 0;border-bottom:1px dashed #ccc}
 .tec span, .poy span, .ycv span, .a3d span, .foa span{font-family:Helvetica;text-transform:capitalize;font-weight:bold;font-size:95%;color:dimgray;line-height:100%}
-.tec span:before, .poy span:before, .ycv span:before, .a3d span:before, .foa span:before{content:counter(efi,square);font-size:120%;padding-right:.2em;font-weight:bold}
+.tec span:before, .poy span:before, .ycv span:before, .a3d span:before, .foa span:before{content:counter(efi,square);font-size:90%;padding-right:.2em;font-weight:bold}
 .ihb{counter-reset:r89}
-.ihb dt:before{content:counter(r89,square);padding-right:.2em;position:absolute;left:.5em}
+.ihb dt:before{content:counter(r89,square);position:absolute;left:-1.1em;font-size:90%;width:1em;text-align:center}
 .tec span:before, .ltp:before{color:darkorange}
 .a3d span:before, .yqg:before{color:#0A0}
 .ycv span:before, .lpn:before{color:#DDA0DD}
@@ -65,18 +64,18 @@
 .qpv{float:right;margin-right:1ex;margin-bottom:1ex}
 h2.t2h{border-bottom:1px #4c8bbb dashed}
 .xkm, .ihb, .oxl, .rmr, .fkf, .uea{clear:both}
-.xkm .cdw{font-family:Helvetica;margin-left:.5em;counter-reset:ql9}
+.xkm .cdw{font-family:Helvetica;margin-left:.5em;counter-reset:ql9;position:relative}
 .xkm q{color:#369;display:block;margin-top:.2em}
 .xkm q:before, .xtc .zz0 q:before, .rgk .zz0 q:before, .rgk .zfn q:before{position:absolute;font-size:50%;text-align:right;color:#DA1413}
-.xkm q:before{left:1em;content:counter(ql9,square)}
-.xtc{counter-reset:qr5}
-.rgk{counter-reset:xra}
-.xtc .zz0 q:before{left:3.5em;content:counter(qr5,square)}
-.rgk .zz0 q:before, .rgk .zfn q:before{left:1.5em;content:counter(xra,square)}
+.xkm q:before{left:-1.1em;content:counter(ql9,square)}
+.xtc{counter-reset:qr5;position:relative}
+.rgk{counter-reset:xra;position:relative}
+.xtc .zz0 q:before{left:-1.1em;content:counter(qr5,square)}
+.rgk .zz0 q:before, .rgk .zfn q:before{left:-1.1em;content:counter(xra,square)}
 .ihb dl{margin-top:.2em}
 .ihb dt, .bx8{font-family:Helvetica;color:#777;font-size:90%;font-weight:bold;letter-spacing:.5px}
 .bx8{color:chocolate}
-.ihb .cdw, .rmr .cdw, .oje, .bsf, .zb4{margin-left:.65em}
+.ihb .cdw, .rmr .cdw, .oje, .bsf, .zb4{margin-left:.65em;position:relative}
 .oxl h2.t2h, .rmr h2.t2h, .fkf h2.t2h, .uea h2.t2h{margin-bottom:.2em}
 .fzy{color:#DA3433;font-family:verdana;font-weight:bold;display:inline-block;font-variant:small-caps}
 .lsz{color:#CA0403;font-style:normal;font-family:Helvetica;font-weight:bold}
@@ -94,7 +93,7 @@ h2.t2h{border-bottom:1px #4c8bbb dashed}
 .bld, .byp em{color:#B8860B}
 .muj div em, .bld, .fiz, .hcs, .lej{color:teal}
 .bld span{font-style:normal}
-.m3s .j1b .muj{margin-left:1.2em;counter-reset:efi}
+.m3s .j1b .muj{margin-left:1.2em;counter-reset:efi;position:relative}
 .bsf div{display:inline;color:#295895;font-family:Helvetica}
 .bsf div+div:before{content:", ";color:black}
 .ac3:before{content:"\021E8\020";color:black}
