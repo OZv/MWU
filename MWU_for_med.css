@@ -18,19 +18,18 @@
 .eyx, .wsm{font-weight:bold;color:sienna;font-family:"Trebuchet MS";font-size:95%}
 .eyx i, .wsm i{font-weight:normal;color:#777;font-family:"Georgia","Times","Times New Roman","serif";font-size:90%}
 .uay .zz0, .xsx{display:block}
-.n6n{font-family:Helvetica;font-weight:bold;color:dimgray;letter-spacing:-1.5px;color:#1C4B8B;position:absolute;left:1ex;width:1em;text-align:center}
+.n6n{font-family:Helvetica;font-weight:bold;color:dimgray;letter-spacing:-1.5px;color:#1C4B8B;position:absolute;left:-1.1em}
 .m6j{display:inline-block;padding:1px 2px;margin-bottom:.2em;color:#777;background-color:palegoldenrod;font-weight:bold;font-family:Helvetica;letter-spacing:1px;line-height:100%}
 .j1b+.j1b, .uay+.uay, .vr0+.ewr{margin-top:.2em}
 .slu, .oxl, .j1b+.m6j, .wgh, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
-.mcg .muj{margin-left:1.3em}
+.mcg .muj{margin-left:1.3em;position:relative}
 .ikf:before{content:"-";color:black;padding-right:2px}
 .slu b, .ikf, .wgh b, .okj, .vr0 b, .c6t b{color:#194885;font-weight:bold;font-size:105%}
 .zz0{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em{color:navy;font-size:105%;padding-left:1px}
-.uay .zz0, .uay .zfn{margin-left:1em}
-.uay .zz0 q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:.5em}
-.muj .zz0 q:before{left:1.8em}
+.uay .zz0, .uay .zfn{margin-left:1em;position:relative}
+.uay .zz0 q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:-1.1em}
 .muj div{color:#333}
 .oje .lcw{font-variant:small-caps;font-size:110%;font-style:normal}
 .mcg .tvb{border:1px solid #DDD;max-width:300px;max-height:400px}
