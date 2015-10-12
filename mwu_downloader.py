@@ -1048,10 +1048,8 @@ class dic_downloader(downloader):
         line = self.cleansp(line)
         p = re.compile(r'(?<=<)(span|div|a|b|h2|ul|em|ol)([^<>]*? class=")([^<>"]+?)\s*(?=")', re.I)
         line = p.sub(self.__repcls, line)
-        n = 1
-        while n:
-            p = re.compile(r'(?<=<)(ol|ul|li)([^<>]*>.+?</)\1(?=>)', re.I)
-            line, n = p.subn(r'div\2div', line)
+        p = re.compile(r'(</?)(?:ol|ul|li)\b', re.I)
+        line = p.sub(r'\1div', line)
         n = 1
         while n:
             p = re.compile(r'<div>(<div><div[^<>]*>.+?</div></div>)</div>', re.I)
