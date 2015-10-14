@@ -8,15 +8,16 @@ if(d[i].style.display=="block"){c.src=c.src.replace(r,"x");d[i].style.display="n
 else{c.src=c.src.replace(r,"c");d[i].style.display="block";}}
 }}());
 var dzp=(function(){
-function e(t,c){
+function e(){
 var d=document.getElementsByTagName("div");
 for(var i=0;i<d.length;i++){
-var p=d[i].previousSibling;
-if(p&&(d[i].className=="cdw"||d[i].className=="oje")){
+var n=d[i];
+var p=n.previousSibling;
+if(p&&(n.className=="cdw"||n.className=="oje")){
 var h=p.offsetHeight;
-if(p.childNodes[1].className=="izv"&&d[i].offsetHeight>h*12){
+if(p.childNodes[1].className=="izv"&&(n.offsetHeight>h*12||n.parentNode.className=="rmr")){
 p.childNodes[1].style.backgroundPosition="0 0";
-d[i].style.display="none";
+n.style.display="none";
 }
 }
 }
