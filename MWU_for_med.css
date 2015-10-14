@@ -24,8 +24,10 @@
 .slu, .oxl, .j1b+.m6j, .wgh, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
 .mcg .muj{margin-left:1.3em;position:relative}
-.ikf:before{content:"-";color:black;padding-right:2px}
-.slu b, .ikf, .wgh b, .okj, .vr0 b, .c6t b{color:#194885;font-weight:bold;font-size:105%}
+.slu .ikf:before{content:"-";color:black;position:absolute;left:-.6em}
+.ikf, .okj, .vr0 b, .c6t b{color:#194885;font-weight:bold;font-size:105%}
+.slu b, .wgh b{color:#369;font-size:110%}
+.slu{margin-left:.7em;position:relative}
 .zz0{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em{color:navy;font-size:105%;padding-left:1px}
 .uay .zz0, .uay .zfn{margin-left:1em;position:relative}
