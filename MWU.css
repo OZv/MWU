@@ -35,8 +35,10 @@
 .j1b+.m6j, .slu, .xkm, .ihb, .oxl, .rmr, .fkf, .uea, .wgh, .ocp, .ac3, .qms, .bfw, .bsf, .nh6, .kyc, .zb4, .obg, .mxc, .xpv, .nvq, .y4l, .qa3{margin-top:1ex}
 .slu+.slu{margin-top:0}
 .mm2 .muj{margin-left:1.3em;position:relative}
-.ikf:before{content:"-";color:black;padding-right:2px}
-.slu b, .ikf, .wgh b, .okj, .wym, .vr0 b, .c6t b, .xtc .lcw{color:#194885;font-weight:bold;font-size:105%}
+.slu .ikf:before{content:"-";color:black;position:absolute;left:-.6em}
+.ikf, .okj, .wym, .vr0 b, .c6t b, .xtc .lcw{color:#194885;font-weight:bold;font-size:105%}
+.slu b, .wgh b{color:#369;font-size:110%}
+.slu{margin-left:.7em;position:relative}
 .zz0, .zfn{font-size:95%;font-family:Helvetica;color:#369;letter-spacing:.5px}
 .zz0 em, .zfn em, .xkm q em, .sq2{color:navy;font-size:105%;padding-left:1px}
 .uay .zz0, .uay .zfn, .xtc .zz0, .rgk .zz0, .rgk .zfn{margin-left:1em;position:relative}
