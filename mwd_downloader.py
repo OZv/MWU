@@ -832,6 +832,8 @@ class mwd_downloader(downloader):
         line = p.sub(self.__fmt_drv, line)
         p = self.__rex(r'(<span class="main-attr">\s*<em)(>[^<>]+)(?=</em>)', re.I)
         line = p.sub(self.__fmt_pos, line)
+        p = self.__rex(r'(?<=<p class=")definition-inner-item with-sense(?=">\s*<em class="sense">)', re.I)
+        line = p.sub(r'idb', line)
         p = self.__rex(r'([,\.\?\!]+\s*)(</em>)', re.I)
         line = p.sub(r'\2\1', line)
         p = self.__rex(r'<font class="mark">[^<>]+</font>', re.I)
