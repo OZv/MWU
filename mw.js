@@ -1,7 +1,8 @@
 var mwz=(function(){
 function vyt(){
 var h=document.getElementsByTagName("h2");
-for(var i=0;i<h.length;i++){
+for(var i=0;i<h.length;i++)
+if(h[i].childNodes.length>1&&h[i].childNodes[1].className=="nri"){
 var g=h[i].offsetHeight;
 var n=h[i].nextSibling;
 if(n.offsetHeight>g*10&&!/href=\"#/.test(n.innerHTML)){
