@@ -21,7 +21,7 @@ em.wqx, .yvp{color:teal}
 .mst cite{color:dimgray;font-family:Helvetica;font-size:90%}
 .jyi{font-family:Helvetica;font-size:95%;display:block;margin-left:1em;position:relative}
 .jyi q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:-1.1em;font-size:90%}
-.d9d .jyi, .rhj .jyi{margin-left:2em}
+.d9d .jyi, .anp .jyi{margin-left:2em}
 .mst h2{margin:.5em 0 .2em;border-bottom:1px solid #CCC;clear:both}
 .nri, .hjn{float:right;width:13px;height:6px;cursor:pointer;position:relative;top:1px;padding:.3em .1em .3em .3em}
 .hjn{transform:scaleY(-1);-webkit-transform:scaleY(-1);filter:FlipV}
@@ -32,9 +32,9 @@ li+.pdg, .ub9, .dvm, .leo, .kwj, .ugp, .dss, p.vwo, .dro{margin-top:.5em}
 .ub9{margin-left:.8em;position:relative}
 .ub9:before{content:"-";left:-.7em;position:absolute}
 .bnu{font-weight:bold;color:#1c4b8b;font-size:105%}
-p.auc{margin-left:1.3em;position:relative}
-.auc span{display:block}
-.auc span.xol, .auc span.gmb{display:inline}
+p.idb{margin-left:1.3em;position:relative}
+.auc span, .idb span{display:block}
+.auc span.xol, .auc span.gmb, .idb span.xol, .idb span.gmb{display:inline}
 em.lfu, em.pys, em.nqw{font-style:normal;font-family:Helvetica;font-weight:bold}
 em.lfu{position:absolute;left:-1.1em}
 em.pys{color:#CA0403}
@@ -63,4 +63,3 @@ em.lfu, em.nqw{color:#1C4B8B;letter-spacing:-1px}
 .ugp{border-left:3px solid #9400D3}
 .m1g{display:inline;vertical-align:text-bottom;max-height:1.5em}
 .j8z, .x7u{font-variant:small-caps}
-
