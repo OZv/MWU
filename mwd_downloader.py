@@ -286,7 +286,7 @@ class downloader:
         words, logs, buf = [], [], []
         self.set_repcls()
         self.crefs = self.getcreflist('cref.txt', dir)
-        self.clstbl = OrderedDict()
+        self.links, self.clstbl = OrderedDict(), OrderedDict()
         self.need_fix = OrderedDict()
         dics = [formatter((self, ''.join([dir, '%d'%1, path.sep])))]
         pool, params = Pool(5), []
@@ -295,7 +295,8 @@ class downloader:
         dics.extend(pool.map(formatter, params))
         for dic, word in dics:
             words.extend(word)
-            self.crefs.update(dic.crefs)
+            self.links.update(dic.links)
+            self.crefs.update(self.links)
             if _DEBUG_:
                 self.clstbl.update(dic.clstbl)
                 self.need_fix.update(dic.need_fix)
@@ -307,7 +308,8 @@ class downloader:
             if text:
                 dump(self.fix_links(text), file, 'a')
                 os.remove(fullpath('formatted.txt', base_dir=sdir))
-        print "%s totally" % info(len(words))
+        dump(''.join(['\n'.join([k, ''.join(['@@@LINK=', v]), '</>\n']) for k, v in self.links.iteritems()]), file, 'a')
+        print "%s and %s totally" % (info(len(words)), info(len(self.links), 'link'))
         dump('\n'.join(words), ''.join([dir, 'words.txt']))
         if logs:
             mod = self.__mod(path.exists(fullpath('log.txt', base_dir=dir)))
@@ -589,7 +591,7 @@ class mwd_downloader(downloader):
 
     def __fmt_pos(self, m):
         pos = m.group(2)
-        if pos.find(' name')>-1 or pos.find('often')>-1:
+        if self.__rex(r'\b(?:name|often|term)').search(pos):
             return m.group(0)
         return ''.join([m.group(1), ' class="ozr"', pos])
 
@@ -600,7 +602,8 @@ class mwd_downloader(downloader):
 
     def __fmt_qt(self, exm):
         exm = self.__rex(r'<em>([^<>]+)</em>', re.I).sub(r'<i>\1</i>', exm)
-        pos = exm.rfind('\xE2\x80\x94')
+        exm = exm.replace('\xE2\x80\x94', '&mdash;')
+        pos = exm.rfind('&mdash;')
         if pos > -1:
             exm = ''.join(['<q>', exm[:pos], '</q><cite>', exm[pos:], '</cite>'])
         else:
@@ -637,8 +640,8 @@ class mwd_downloader(downloader):
 
     def __reg_drv(self, m):
         uk = m.group(2).strip().lower()
-        if not uk in self.crefs:
-            self.crefs[uk] = self.key
+        if not uk in self.crefs and not uk in self.links:
+            self.links[uk] = self.key
         return ''.join(['<span class="bnu">', m.group(2), '</span> '])
 
     def __fmt_drv(self, m):
