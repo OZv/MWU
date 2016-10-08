@@ -287,7 +287,7 @@ class downloader:
                 if path.exists(fullpath(fn, base_dir=sdir)):
                     fw.write('\n'.join([readdata(fn, sdir).strip(), '']))
             fw.close()
-        words, logs, buf = [], [], []
+        words, self.logs, buf = [], [], []
         self.set_repcls()
         self.crefs = self.getcreflist('cref.txt', dir)
         self.links, self.clstbl = OrderedDict(), OrderedDict()
@@ -299,7 +299,9 @@ class downloader:
         dics.extend(pool.map(formatter, params))
         for dic, word in dics:
             words.extend(word)
+            self.logs.extend(dic.logs)
             self.links.update(dic.links)
+            self.crefs.update(dic.crefs)
             self.crefs.update(self.links)
             if _DEBUG_:
                 self.clstbl.update(dic.clstbl)
@@ -315,9 +317,9 @@ class downloader:
         dump(''.join(['\n'.join([z2c(k), ''.join(['@@@LINK=', z2c(v)]), '</>\n']) for k, v in self.links.iteritems()]), file, 'a')
         print "%s and %s totally" % (info(len(words)), info(len(self.links), 'link'))
         dump('\n'.join(words), ''.join([dir, 'words.txt']))
-        if logs:
+        if self.logs:
             mod = self.__mod(path.exists(fullpath('log.txt', base_dir=dir)))
-            dump('\n'.join(logs), ''.join([dir, 'log.txt']), mod)
+            dump('\n'.join(self.logs), ''.join([dir, 'log.txt']), mod)
         if _DEBUG_:
             if self.clstbl:
                 del buf[:]
@@ -336,9 +338,9 @@ def f_start((obj, arg)):
 
 
 def formatter((dic, sdir)):
-    words, logs, fmtd = [], [], []
+    words, fmtd = [], []
     file = ''.join([sdir, 'formatted.txt'])
-    fmtd = dic.load_file(sdir, words, logs)
+    fmtd = dic.load_file(sdir, words)
     if fmtd:
         dump(''.join(fmtd), file)
     print sdir
@@ -486,7 +488,7 @@ class mwd_downloader(downloader):
             logs.append("I01:\t'%s' is not found in MWD" % word)
         return exist
 
-    def load_file(self, sdir, words, logs):
+    def load_file(self, sdir, words):
         file, buf = fullpath('rawhtml.txt', base_dir=sdir), []
         if not path.exists(file):
             print "%s does not exist" % file
@@ -495,7 +497,7 @@ class mwd_downloader(downloader):
         for ln in fileinput.input(file):
             ln = ln.strip()
             if ln == '</>':
-                text = self.format(lns[0], lns[1], logs)
+                text = self.format(lns[0], lns[1])
                 if text:
                     buf.append(text)
                     words.append(lns[0])
@@ -534,7 +536,7 @@ class mwd_downloader(downloader):
         'tense-box quick-def-box simple-def-box card-box def-text another-def def-text': 'srx',
         'tense-box quick-def-box simple-def-box card-box def-text has-tw-flag': 'd7f'},
         'span': {'main-attr': 'qun', 'intro-colon': 'gmb', 'inflections': 'iqw',
-        'word-syllables': 'ttw', 'in': 'zf2', 'in-more': 'bo3', 'unicode': 'g5i',
+        'word-syllables': 'ttw', 'in': 'zf2', 'in-more': 'bo3', 'unicode': 'g5i', 'set': 'blt',
         'ibar': 'crk', 'code_hrev': 'lcu', 'code_uhorn': 'ink', 'code_ohornac': 'ise',
         'ph': 'ibz', 'sm-caps': 'x7u', 'fr': 'pfu', 'code_ibartild': 'bxq', 'code_openocrc': 'vgn'},
         'ol': {'definition-list': 'lvc', 'definition-list no-count': 'jza'},
@@ -560,6 +562,12 @@ class mwd_downloader(downloader):
             h1 = q.sub(n.group(1).replace('&#183;', '<em></em>'), h1)
             h1 = p.sub(r'', h1)
         return h1
+
+    def __fmt_pr(self, m):
+        pr = m.group(2)
+        p = self.__rex(r'<span class="lig"><span>([^<>]+)</span><span>([^<>]+)</span>([^<>]*)</span>', re.I)
+        pr = p.sub(r'\1\2\3', pr)
+        return ''.join(['uig', m.group(1), '/', pr, '/'])
 
     def __fmt_illu(self, illu):
         p = self.__rex(r'(</?)(?:it?|em)(?=>)', re.I)
@@ -609,10 +617,11 @@ class mwd_downloader(downloader):
         exm = exm.replace('\xE2\x80\x94', '&mdash;')
         pos = exm.rfind('&mdash;')
         if pos > -1:
-            exm = ''.join(['<q>', exm[:pos], '</q><cite>', exm[pos:], '</cite>'])
-        else:
-            exm = ''.join(['<q>', exm, '</q>'])
-        return exm
+            q, ct = exm[:pos], exm[pos:]
+            if self.__rex(r'(?<=[^\w\d\s,;:])\s*$').search(q) or self.__rex(''.join([r'^&mdash;\s*<i>(?!\s*', self.key, ')']), re.I).search(ct) or\
+            self.__rex(r'^&mdash;\s*[A-Z\d]').search(ct):
+                return ''.join(['<q>', q, '</q><cite>', ct, '</cite>'])
+        return ''.join(['<q>', exm, '</q>'])
 
     def __fmt_exm(self, m):
         exm = ''.join([m.group(1), m.group(2)])
@@ -648,8 +657,6 @@ class mwd_downloader(downloader):
         drv = m.group(1)
         p = self.__rex(r'<(h\d)>([^<>]+)</\1>', re.I)
         drv = p.sub(self.__reg_drv, drv)
-        p = self.__rex(r'((?:\s*<img\b[^<>]+>)+)\s*(<span class="uig">(?:[^<>]|</?em>)+?)\s*(/</span>)', re.I)
-        drv = p.sub(r' \2 \1\3 ', drv)
         p = self.__rex(r'(?<=/</span>)(?=\s*<em)', re.I)
         drv = p.sub(r',', drv)
         p = self.__rex(r'(<span class="in(?:-more)?">.+?)\s*(</span>)(?=\s*<span class="in(?:-more)?">)', re.I)
@@ -693,13 +700,13 @@ class mwd_downloader(downloader):
         text = p.sub(self.__fmt_lk, text)
         return text
 
-    def format(self, key, line, logs):
+    def format(self, key, line):
         if line.startswith('@@@'):
             ref = line.split('=')[1]
             if ref.lower() in self.crefs:
                 return '\n'.join([key, line, '</>\n'])
             else:
-                logs.append("W01:\t'%s' - no such word in MWD" % ref)
+                self.logs.append("W01:\t'%s' - no such word in MWD" % ref)
                 return ''
         self.key = key
         p = self.__rex(r'<TBL>\s*<div\b[^<>]*>\s*(.+?)\s*</div>\s*</TBL>')
@@ -762,7 +769,7 @@ class mwd_downloader(downloader):
         p = self.__rex(r'<a [^<>]*data-file="\s*"[^<>]*>[^<>]*<span class="play-box">\s*</span></a>', re.I)
         line = p.sub(r'', line)
         p = self.__rex(r'(?<=<span class=")pr(">)\\(.+?)\\(?=</span>)', re.I)
-        line = p.sub(r'uig\1/\2/', line)
+        line = p.sub(self.__fmt_pr, line)
         p = self.__rex(r'<span class="pr">(\s*<span class="uig">(.+?)</span>\s*)</span>', re.I)
         line = p.sub(r'\1', line)
         p = self.__rex(r'(</h1>)((?:\s*<img\b[^<>]+>)+)', re.I)
@@ -817,6 +824,8 @@ class mwd_downloader(downloader):
         line = p.sub(r' class="wqx"\1:', line)
         p = self.__rex(r'(<span>\s*<em)(?=>[^<>]+</em>\s*</span>)', re.I)
         line = p.sub(r'\1 class="wqx"', line)
+        p = self.__rex(r'(<p>\s*<em)(?=>[^<>]+</em>\s*</p>\s*<ol)', re.I)
+        line = p.sub(r'\1 class="wqx"', line)
         p = self.__rex(r'<em class="vi">&lt;\s*&gt;</em>', re.I)
         line = p.sub(r'', line)
         p = self.__rex(r'<em class="vi">&lt;(.+?)&gt;</em>\s*((?:[\.,;\?\!])?)', re.I)
@@ -827,19 +836,27 @@ class mwd_downloader(downloader):
         line = p.sub(self.__fmt_tt, line)
         p = self.__rex(r'<(h\d)>\s*(Examples?) of(.+?)?</\1>', re.I)
         line = p.sub(r'<h2><span class="tih">\2</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
+        p = self.__rex(r'<(h\d)>\s*(<i>[^<>]+</i> [^<>]*\band.+?)\s*</\1>', re.I)
+        line = p.sub(r'<h2><span>\2</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
         p = self.__rex(r'(?<=<div class="card-box examples-box)(.+?)(?=<div class="(?:card-box|central-abl-box|definitions-center-creative-cont)|</ol>)', re.I)
         line = p.sub(self.__fmt_exm2, line)
         p = self.__rex(r'<li class="[^<>]+">\s*<(h\d)[^<>]*>\s*([^<>]+)\s*</\1>\s*</li>', re.I)
         line = p.sub(r'<div class="pdg"><em>\2</em></div>', line)
+        p = self.__rex(r'((?:\s*<img\b[^<>]+>)+)\s*(<span class="uig">.+?)\s*(/</span>)', re.I)
+        line = p.sub(r' \2 \1\3 ', line)
+        line = self.__rex(r'\\([^<>\\]+?)\\').sub(r'<span class="uig">/\1/</span>', line)
         p = self.__rex(r'<div class="runon-attributes">(.+?)</div>', re.I)
         line = p.sub(self.__fmt_drv, line)
         p = self.__rex(r'(<span class="in(?:-more)?">.+?</span>\s*)(?=<div)', re.I)
         line = p.sub(self.__fmt_drv, line)
-        line = line.replace('\x6F\xCC\x87', '<span class="ixo">\x6F\xCC\x87</span>')
+        line = self.__rex(r'(\x6F\xCC\x87|\x6B\xCC\xB1)').sub(r'<span class="ixo">\1</span>', line)
         p = self.__rex(r'(<span class="main-attr">\s*<em)(>[^<>]+)(?=</em>)', re.I)
         line = p.sub(self.__fmt_pos, line)
         p = self.__rex(r'(?<=<p class=")definition-inner-item with-sense(?=">\s*<em class="sense">)', re.I)
         line = p.sub(r'idb', line)
+        p = self.__rex(r'(?<=<div class="definition-block def-text">)(.+?)(?=</div>)', re.I)
+        q = self.__rex(r'(?<=<p class=")definition-inner-item(?=">\s*<span>(?!\s*<span class="intro-colon"))', re.I)
+        line = p.sub(lambda m: q.sub(r'gdl', m.group(1)), line)
         p = self.__rex(r'([,\.\?\!]+\s*)(</em>)', re.I)
         line = p.sub(r'\2\1', line)
         p = self.__rex(r'<font class="mark">[^<>]+</font>', re.I)
