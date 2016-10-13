@@ -692,7 +692,11 @@ class mwd_downloader(downloader):
         elif word.lower() in self.crefs:
             ref = self.crefs[word.lower()]
         else:
-            return ''.join(['<span class="xol">', word, '</span>', ed])
+            ref = ref.replace('(', '').replace(')', '').lower()
+            if ref in self.crefs:
+                ref = self.crefs[ref]
+            else:
+                return ''.join(['<span class="xol">', word, '</span>', ed])
         return ''.join(['<a href="entry://', z2c(fix_c(ref)), '"', cls, '>', word, '</a>', ed])
 
     def fix_links(self, text):
@@ -830,7 +834,11 @@ class mwd_downloader(downloader):
         line = p.sub(r'', line)
         p = self.__rex(r'<em class="vi">&lt;(.+?)&gt;</em>\s*((?:[\.,;\?\!])?)', re.I)
         line = p.sub(self.__fmt_exm, line)
-        p = self.__rex(r'(<sup>\d+</sup>)(\w[^<>]*(?:</a>)?)', re.I)
+        p = self.__rex(r'([,\.\?\!]+\s*)(</em>)(?=[^,])', re.I)
+        line = p.sub(r'\2\1', line)
+        p = self.__rex(r'(<sup>\d+</sup>)([\w-][^<>]*</(?:a|b|em)>|[\w-][^<>\s]*[\w-]|[\w-])', re.I)
+        line = p.sub(r'\2\1', line)
+        p = self.__rex(r'(<sup>\d+</sup>)(\s*<(em|b)>[^<>]+</\3>)', re.I)
         line = p.sub(r'\2\1', line)
         p = self.__rex(r'<(h\d)( class="card-box-title">)\s*(?:<i>[^<>]+</i>\s*)?([^<>]+)\s*(of.+?)?</\1>', re.I)
         line = p.sub(self.__fmt_tt, line)
@@ -857,8 +865,6 @@ class mwd_downloader(downloader):
         p = self.__rex(r'(?<=<div class="definition-block def-text">)(.+?)(?=</div>)', re.I)
         q = self.__rex(r'(?<=<p class=")definition-inner-item(?=">\s*<span>(?!\s*<span class="intro-colon"))', re.I)
         line = p.sub(lambda m: q.sub(r'gdl', m.group(1)), line)
-        p = self.__rex(r'([,\.\?\!]+\s*)(</em>)', re.I)
-        line = p.sub(r'\2\1', line)
         p = self.__rex(r'<font class="mark">[^<>]+</font>', re.I)
         line = p.sub('<BR><span class="dia"></span> ', line)
         p = self.__rex(r'<font class="utxt">(.+?)</font>', re.I)
