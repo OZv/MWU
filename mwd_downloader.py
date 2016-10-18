@@ -618,8 +618,8 @@ class mwd_downloader(downloader):
         pos = exm.rfind('&mdash;')
         if pos > -1:
             q, ct = exm[:pos], exm[pos:]
-            if self.__rex(r'(?<=[^\w\d\s,;:])\s*$').search(q) or self.__rex(''.join([r'^&mdash;\s*<i>(?!\s*', self.key, ')']), re.I).search(ct) or\
-            self.__rex(r'^&mdash;\s*[A-Z\d]').search(ct):
+            if self.__rex(r'\.\s*$').search(q) or self.__rex(''.join([r'^&mdash;\s*<i>(?!\s*', self.key, ')']), re.I).search(ct) or\
+            self.__rex(r'^&mdash;\s*(\xE2\x80\x9C|&quot;)?[A-Z\d]').search(ct):
                 return ''.join(['<q>', q, '</q><cite>', ct, '</cite>'])
         return ''.join(['<q>', exm, '</q>'])
 
