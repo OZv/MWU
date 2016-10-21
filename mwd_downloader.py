@@ -116,16 +116,15 @@ def getpage(link, BASE_URL=''):
         return None
 
 
-def getpage2(link, BASE_URL=''):
-    url = ''.join([BASE_URL, link])
+def getpage2(url):
     r = requests.get(url, timeout=10)
-    if r.history:
+    if r.history and r.status_code!=404:
         rurl = urllib.unquote(str(r.url))
         if re.compile(r'#\w+Dictionary\s*$', re.I).search(rurl) or\
-            not re.compile(r'/dictionary/[^<>/]+$', re.I).search(rurl):
+            re.compile(r'/medical/[^<>/]+$', re.I).search(rurl):
             return 200, ' '
         elif urllib.unquote(url).lower() != rurl.lower():
-            ref = re.compile(r'/dictionary/([^<>/]+)\s*$').search(rurl).group(1)
+            ref = re.compile(r'/(?:dictionary|legal)/([^<>/]+)\s*$').search(rurl).group(1)
             return 301, ref
     if r.status_code == 200:
         return 200, r.content
@@ -197,9 +196,10 @@ class downloader:
                             if self.makeword(page, cur, words, logs, d_app):
                                 crefs[cur] = url
                                 count += 1
-                        else:
-                            assert cur.strip().lower()!=page.strip().lower()
+                        elif cur.strip().lower() != page.strip().lower():
                             words.append((cur, ''.join(['@@@LINK=', page])))
+                    elif status == 404:
+                        logs.append("E02:\tCan't download '%s', word not found" % cur)
                     else:
                         failed.append((url, cur))
                 except requests.TooManyRedirects, e:
@@ -256,7 +256,7 @@ class downloader:
             print ("New session started")
             return self.__fetchdata_and_make_mdx(arg, arg['alp'])
 
-    def getcreflist(self, file, base_dir=''):
+    def getcreflist(self, file, base_dir='', org=False):
         words = readdata(file, base_dir)
         if words:
             p = re.compile(r'\s*\n\s*')
@@ -264,8 +264,11 @@ class downloader:
             crefs = OrderedDict()
             for word in words.split('\n'):
                 k, v = word.split('\t')
-                crefs[k.lower()] = k
-                crefs[v.lower()] = k
+                if org:
+                    crefs[k.lower()] = v
+                else:
+                    crefs[k.lower()] = k
+                    crefs[v.lower()] = k
             return crefs
         print("%s: No such file or file content is empty." % file)
         return OrderedDict()
@@ -289,7 +292,21 @@ class downloader:
             fw.close()
         words, self.logs, buf = [], [], []
         self.set_repcls()
-        self.crefs = self.getcreflist('cref.txt', dir)
+        self.makecref = False
+        if self.kids or self.legal:
+            if self.kids:
+                fname, cf = 'MWK', 'cref_k.txt'
+            else:
+                fname, cf = 'MWL', 'cref_l.txt'
+            if path.exists(fullpath(cf, base_dir=dir)):
+                self.crefs = self.getcreflist(cf, dir)
+            else:
+                self.crefs = self.getcreflist('cref.txt', dir, True)
+                self.makecref = True
+                self.trefs = OrderedDict()
+        else:
+            fname = self.DIC_T
+            self.crefs = self.getcreflist('cref.txt', dir)
         self.links, self.clstbl = OrderedDict(), OrderedDict()
         self.need_fix = OrderedDict()
         dics = [formatter((self, ''.join([dir, '%d'%1, path.sep])))]
@@ -300,13 +317,15 @@ class downloader:
         for dic, word in dics:
             words.extend(word)
             self.logs.extend(dic.logs)
+            if self.makecref:
+                self.trefs.update(dic.trefs)
             self.links.update(dic.links)
             self.crefs.update(dic.crefs)
             self.crefs.update(self.links)
             if _DEBUG_:
                 self.clstbl.update(dic.clstbl)
                 self.need_fix.update(dic.need_fix)
-        file = ''.join([dir, self.DIC_T, path.extsep, 'txt'])
+        file = ''.join([dir, fname, path.extsep, 'txt'])
         dump('', file)
         for i in xrange(1, times+1):
             sdir = ''.join([dir, '%d'%i, path.sep])
@@ -320,6 +339,8 @@ class downloader:
         if self.logs:
             mod = self.__mod(path.exists(fullpath('log.txt', base_dir=dir)))
             dump('\n'.join(self.logs), ''.join([dir, 'log.txt']), mod)
+        if self.makecref:
+            dump(''.join(['\n'.join(['\t'.join([k, v]) for k, v in self.trefs.iteritems()]), '\n']), ''.join([dir, cf]))
         if _DEBUG_:
             if self.clstbl:
                 del buf[:]
@@ -393,13 +414,16 @@ def multiprocess_fetcher(dir, d_refs, wordlist, obj, base):
 
 class mwd_downloader(downloader):
 #mwd downloader
-    def __init__(self):
+    def __init__(self, args):
         downloader.__init__(self, 'MWD')
+        self.kids = args.kids
+        self.legal = args.legal
         self.__base_url = ORIGIN
         self.__re_d = {re.I: {}, 0: {}}
 
     def makeurl(self, cur):
-        return ''.join([self.__base_url, 'dictionary/', cur])
+        dn = 'legal' if self.legal else 'dictionary'
+        return ''.join([self.__base_url, dn, '/', cur])
 
     def __rex(self, ptn, mode=0):
         if ptn in self.__re_d[mode]:
@@ -534,7 +558,11 @@ class mwd_downloader(downloader):
         'card-box small-box related-box end': 'kbm', 'card-box small-box first-use-box': 'plu',
         'card-box simple-def-box synonym-discussion-box synonym-discussion-module-anchor': 'vzp',
         'tense-box quick-def-box simple-def-box card-box def-text another-def def-text': 'srx',
-        'tense-box quick-def-box simple-def-box card-box def-text has-tw-flag': 'd7f'},
+        'tense-box quick-def-box simple-def-box card-box def-text has-tw-flag': 'd7f',
+        'card-box small-box history-box': 'tgi', 'card-box small-box history-box end': 'kq1',
+        'card-box small-box word-root-box': 'daf', 'card-box small-box word-root-box end': 'pxu',
+        'card-box small-box hint-box': 'hby', 'card-box small-box headscratcher-box': 'f4j',
+        'card-box small-box headscratcher-box end': 'rez'},
         'span': {'main-attr': 'qun', 'intro-colon': 'gmb', 'inflections': 'iqw',
         'word-syllables': 'ttw', 'in': 'zf2', 'in-more': 'bo3', 'unicode': 'g5i', 'set': 'blt',
         'ibar': 'crk', 'code_hrev': 'lcu', 'code_uhorn': 'ink', 'code_ohornac': 'ise',
@@ -543,13 +571,30 @@ class mwd_downloader(downloader):
         'p': {'definition-inner-item with-sense': 'auc', 'definition-inner-item': 'ohk',
         'see-in-addition': 'vwo'},
         'em': {'sense': 'lfu', 'sub sense num': 'nqw', 'qword': 'qky', 'sc': 'j8z',
-        'sub sense alp': 'pys', 'it': 'yvp'},
+        'sub sense alp': 'pys', 'it': 'yvp', 'b': 't5o'},
         'h2': {'card-box-title': 'gfr', 'typo7 margin-t-10px margin-b-30px text-center': 'y5b'},
         'ul': {'definition-list no-count': 'nih'}, 'li': {'hide-def-content': 'uy1'}}
 
+    def __cut(self, line):
+        if self.kids or self.legal:
+            if self.kids:
+                name = 'studentDictionary'
+            else:
+                name = 'legalDictionary'
+            p = self.__rex(''.join([r'<a name="', name, r'">\s*</a>(.+?)(?=<a name="[^<>]+">\s*</a>\s*<h2 class="typo7|$)']), re.I)
+            m = p.search(line)
+            line = m.group(1) if m else ''
+        else:
+            p = self.__rex(r'<a name="[^<>]+">\s*</a>\s*<h2 class="typo7', re.I)
+            m = p.search(line)
+            if m:
+                line = line[:m.start()]
+        p = self.__rex(r'<h2 class="typo7[^<>]*">.+?</h2>', re.I)
+        return p.sub(r'', line).strip()
+
     def __fmt_hd(self, m):
         hd = m.group(1)
-        p = self.__rex(r'<(h\d)>([^<>]+)\s*</\1>', re.I)
+        p = self.__rex(r'<(h\d)>((?:[^<>]|</?sub>)+)\s*</\1>', re.I)
         hd = p.sub(r'<h1><span class="noj">\2</span></h1>', hd)
         return hd
 
@@ -603,7 +648,7 @@ class mwd_downloader(downloader):
 
     def __fmt_pos(self, m):
         pos = m.group(2)
-        if self.__rex(r'\b(?:name|often|term)').search(pos):
+        if self.__rex(r'\b(?:name|often|term|Law)', re.I).search(pos):
             return m.group(0)
         return ''.join([m.group(1), ' class="ozr"', pos])
 
@@ -686,7 +731,7 @@ class mwd_downloader(downloader):
             cls = ' class="fea"'
         else:
             cls = ''
-        ref = self.__rex(r'^/dictionary/|\[\d+\]$').sub(r'', ref).strip()
+        ref = self.__rex(r'^/(?:dictionary|legal)/|(?:\[\d+\]|#\w+Dictionary)$').sub(r'', ref).strip()
         if ref.lower() in self.crefs:
             ref = self.crefs[ref.lower()]
         elif word.lower() in self.crefs:
@@ -713,26 +758,30 @@ class mwd_downloader(downloader):
                 self.logs.append("W01:\t'%s' - no such word in MWD" % ref)
                 return ''
         self.key = key
-        p = self.__rex(r'<TBL>\s*<div\b[^<>]*>\s*(.+?)\s*</div>\s*</TBL>')
-        line, n = p.subn(r'\1', line)
-        if n:
-            p = self.__rex(r'(?<=<img )[^<>]*(src=")[^<>]+?/([^<>/"]+)"[^<>]*(?=>)', re.I)
-            line = p.sub(lambda m: ''.join([self.__copy_img(m, 'v'), ' style="margin-left:1em;max-width:90%"']), line)
-            self.crefs[key] = key
-            return '\n'.join([key, ''.join(['<div style="margin-bottom:1em;color:maroon;font-family:Georgia,Times;font-size:120%"><b>', key, '</b></div>', line]), '</>\n'])
-        p = self.__rex(r'<POP>\s*(.+?)\s*</POP>')
-        m =p.search(line)
-        if m:
-            q = self.__rex(r'label:\s*([\'"])([^<>]+?)\1', re.I)
-            tt = q.search(m.group(1)).group(2)
-            q = self.__rex(r'img:\s*([\'"])[^<>]+?/([^<>/]+)\1', re.I)
-            src = q.search(m.group(1)).group(2)
-            line = p.sub(r'', line)
-            line = ''.join([r'<img title="', tt, '" src="', src.replace('.gif', '.png'), '" class="kzo">', line])
-        line = self.__rex(r'<div class="popularity-block">\s*</div>', re.I).sub(r'', line)
-        p = self.__rex(r'<ILLU>\s*<div\b[^<>]*>\s*(.+?)\s*</div>\s*</ILLU>')
-        m = p.search(line)
-        illu = self.__fmt_illu(m.group(1)) if m else ''
+        if not(self.kids or self.legal):
+            p = self.__rex(r'<TBL>\s*<div\b[^<>]*>\s*(.+?)\s*</div>\s*</TBL>')
+            line, n = p.subn(r'\1', line)
+            if n:
+                p = self.__rex(r'(?<=<img )[^<>]*(src=")[^<>]+?/([^<>/"]+)"[^<>]*(?=>)', re.I)
+                line = p.sub(lambda m: ''.join([self.__copy_img(m, 'v'), ' style="margin-left:1em;max-width:90%"']), line)
+                self.crefs[key] = key
+                return '\n'.join([key, ''.join(['<div style="margin-bottom:1em;color:maroon;font-family:Georgia,Times;font-size:120%"><b>', key, '</b></div>', line]), '</>\n'])
+        pop = ''
+        if not self.legal:
+            p = self.__rex(r'<POP>\s*(.+?)\s*</POP>')
+            m =p.search(line)
+            if m:
+                q = self.__rex(r'label:\s*([\'"])([^<>]+?)\1', re.I)
+                tt = q.search(m.group(1)).group(2)
+                q = self.__rex(r'img:\s*([\'"])[^<>]+?/([^<>/]+)\1', re.I)
+                src = q.search(m.group(1)).group(2)
+                line = p.sub(r'', line)
+                pop = ''.join([r'<img title="', tt, '" src="', src.replace('.gif', '.png'), '" class="kzo">'])
+            line = self.__rex(r'<div class="popularity-block">\s*</div>', re.I).sub(r'', line)
+        p, illu = self.__rex(r'<ILLU>\s*<div\b[^<>]*>\s*(.+?)\s*</div>\s*</ILLU>'), ''
+        if not(self.kids or self.legal):
+            m = p.search(line)
+            illu = self.__fmt_illu(m.group(1)) if m else ''
         line = p.sub(r'', line)
         p = self.__rex(r'<div class="(?:card-box secondary-card word-by-word-box|card-box secondary-box w3-note-box)">.+?(?=<div class="(?:card-box|central-abl-box|definitions-center-creative-cont))', re.I)
         line = p.sub(r'', line)
@@ -740,12 +789,9 @@ class mwd_downloader(downloader):
         line = self.__rex(r'<div class="clearfix">\s*</div>', re.I).sub(r'', line)
         line = self.__rex(r'<div class="simple-def-source">[^<>]+</div>', re.I).sub(r'', line)
         line = self.__rex(r'<div class="link-cta-container">.+?</div>', re.I).sub(r'', line)
-        p = self.__rex(r'<a name="[^<>]+">\s*</a>\s*<h2 class="typo7', re.I)
-        m = p.search(line)
-        if m:
-            line = line[:m.start()]
-        p = self.__rex(r'<h2 class="typo7[^<>]*">.+?</h2>', re.I)
-        line = p.sub(r'', line)
+        line = self.__cut(line)
+        if not line:
+            return ''
         line = self.__rex(r'<div class="(?:social-sidebar|wgt-related-to)[^<>]+>.+?</div>(?=\s*<script)|<script\b[^<>]*>.+?</script>', re.I).sub(r'', line)
         p = self.__rex(r'<div class="(?:card-box simple-def-box secondary-card also-found-in-card|seen-and-heard-block)"[^<>]*>.+?(?=<hr|$)', re.I)
         line = p.sub(r'', line)
@@ -758,12 +804,13 @@ class mwd_downloader(downloader):
         p = self.__rex(r'<style>\s*\.image-word-wrapper[^<>]+</style>\s*<img\b[^<>]+>', re.I)
         line = p.sub(r'', line)
         line = self.__rex(r'<hr\b[^<>]*>', re.I).sub(r'', line)
-        p = self.__rex(r'<(h\d) class="card-box-title">\s*Usage\b.+?</\1>\s*<div class="card-primary-content">\s*<p>.+?</p>\s*</div>', re.I)
-        m = p.search(line)
-        if m:
-            pt1, pt2 = line[:m.end()], line[m.end():]
-            pt2 = pt2.replace(m.group(0), '')
-            line = ''.join([pt1, pt2])
+        for p in [self.__rex(r'<(h\d) class="card-box-title">\s*Usage\b.+?</\1>\s*<div class="card-primary-content">\s*<p>.+?</p>\s*</div>', re.I),
+            self.__rex(r'<(h\d) class="card-box-title">\s*Other [^<>]+? terms\s*</\1>\s*<div class="card-primary-content">\s*<p>.+?</p>\s*</div>', re.I)]:
+            m = p.search(line)
+            if m:
+                pt1, pt2 = line[:m.end()], line[m.end():]
+                pt2 = pt2.replace(m.group(0), '')
+                line = ''.join([pt1, pt2])
         p = self.__rex(r'<span class="def-num[^<>]*">(\d+)</span>\s*(<(h\d)>)([^<>]+)\s*</\3>', re.I)
         line = p.sub(r'<h1><span class="noj">\4</span> <sup>\1</sup></h1>', line)
         p = self.__rex(r'(<div class="word-header[^<>]*">.+?)(?=<div class="word-attributes[^<>]*">)', re.I)
@@ -778,7 +825,7 @@ class mwd_downloader(downloader):
         line = p.sub(r'\1', line)
         p = self.__rex(r'(</h1>)((?:\s*<img\b[^<>]+>)+)', re.I)
         line = p.sub(r'\2\1', line)
-        p = self.__rex(r'<(h\d)>\s*((?:Full )?Definitions?) of(?:.+?)?</\1>', re.I)
+        p = self.__rex(r'<(h\d)>\s*(?:Legal )?((?:Full )?Definitions?) of(?:.+?)?</\1>', re.I)
         line = p.sub(r'<div class="das">\2</div>', line)
         p = self.__rex(r'<(h\d)[^<>]*>\s*[^<>]*\bDefinitions?(?:.+?)?</\1>', re.I)
         line = p.sub(r'', line)
@@ -808,13 +855,14 @@ class mwd_downloader(downloader):
         line = p.sub(r'\2\1', line)
         p = self.__rex(r'(?<=<h1>)(.+?)(?=</h1>)', re.I)
         line = p.sub(self.__fmt_h1, line)
-        p = self.__rex(r'<ILLU( class="dvm">.+?</)ILLU>')
-        m = p.search(line)
-        if m:
-            line = p.sub(r'', line)
-            q = self.__rex(r'(?=<div class="modules clearfix">|$)', re.I)
-            line = q.sub(''.join(['<div', m.group(1), 'div>']), line, 1)
-        line = self.__rex(r'<ILLU( class="gmw">.+?</)ILLU>').sub(r'<div\1div>', line)
+        if not(self.kids or self.legal):
+            p = self.__rex(r'<ILLU( class="dvm">.+?</)ILLU>')
+            m = p.search(line)
+            if m:
+                line = p.sub(r'', line)
+                q = self.__rex(r'(?=<div class="modules clearfix">|$)', re.I)
+                line = q.sub(''.join(['<div', m.group(1), 'div>']), line, 1)
+            line = self.__rex(r'<ILLU( class="gmw">.+?</)ILLU>').sub(r'<div\1div>', line)
         p = self.__rex(r'<h2>Did You Know\??\s*</h2>\s*<div class="card-primary-content def-text">\s*<p>(.+?)</p>\s*</div>', re.I)
         m = p.search(line)
         if m:
@@ -842,10 +890,20 @@ class mwd_downloader(downloader):
         line = p.sub(r'\2\1', line)
         p = self.__rex(r'<(h\d)( class="card-box-title">)\s*(?:<i>[^<>]+</i>\s*)?([^<>]+)\s*(of.+?)?</\1>', re.I)
         line = p.sub(self.__fmt_tt, line)
-        p = self.__rex(r'<(h\d)>\s*(Examples?) of(.+?)?</\1>', re.I)
+        p = self.__rex(r'<(h\d)[^<>]*>\s*(Examples?) of(.+?)?</\1>', re.I)
         line = p.sub(r'<h2><span class="tih">\2</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
-        p = self.__rex(r'<(h\d)>\s*(<i>[^<>]+</i> [^<>]*\band.+?)\s*</\1>', re.I)
-        line = p.sub(r'<h2><span>\2</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
+        if self.kids:
+            p = self.__rex(r'<(h\d)[^<>]*>\s*History for(.+?)?</\1>', re.I)
+            line = p.sub(r'<h2><span class="tih">Word history</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
+            p = self.__rex(r'<(h\d)[^<>]*>\s*(Headscratcher|Hint) for(.+?)?</\1>', re.I)
+            line = p.sub(r'<h2><span class="tih">\2</span><img src="c.png" class="nri" onclick="mwz.x(this)"></h2>', line)
+        p = self.__rex(r'<(h[2-9])[^<>]*>\s*((?:[^<>]|</?[^h/][^<>]*>)+?(?:</\w+>|[^>\s]))\s*</\1>\s*<div class="card-primary-content def-text">\s*(<p>.+?</p>)\s*</div>', re.I)
+        m = p.search(line)
+        if m:
+            line = p.sub(r'', line)
+            p = self.__rex(r'(?=<div class="modules clearfix">|$)', re.I)
+            line, n = p.subn(''.join(['<div class="viz"><div class="eqc">', m.group(2), '</div>', m.group(3), '</div>']), line, 1)
+            assert n
         p = self.__rex(r'(?<=<div class="card-box examples-box)(.+?)(?=<div class="(?:card-box|central-abl-box|definitions-center-creative-cont)|</ol>)', re.I)
         line = p.sub(self.__fmt_exm2, line)
         p = self.__rex(r'<li class="[^<>]+">\s*<(h\d)[^<>]*>\s*([^<>]+)\s*</\1>\s*</li>', re.I)
@@ -876,7 +934,9 @@ class mwd_downloader(downloader):
         line = p.sub(self.__repcls, line)
         line = self.cleansp(line)
         js = '<script type="text/javascript"src="mw.js"></script>' if line.find('onclick=')>-1 else ''
-        line = ''.join(['<link rel="stylesheet"href="', self.DIC_T, '.css"type="text/css"><div class="mst">', line, js, '</div>'])
+        line = ''.join(['<link rel="stylesheet"href="', self.DIC_T, '.css"type="text/css"><div class="mst">', pop, line, js, '</div>'])
+        if self.makecref:
+            self.trefs[key] = self.crefs[key]
         if _DEBUG_:
             p = self.__rex(r'<([^a]|\w{2,})\b[^<>]*class="([^<>"]{4,}|[^<>"]{,2})"')
             for tag, cls in p.findall(line):
@@ -891,9 +951,9 @@ class mwd_downloader(downloader):
         return '\n'.join([z2c(key), line, '</>\n'])
 
 
-def getlinks(ap, dict):
+def getlinks(ap, dict, dn):
     p = re.compile(r'<div class="entries">(.+?)</div>', re.I)
-    q = re.compile(r'<a href="/dictionary/([^<>]+?)">\s*([^<>]+?)\s*</a>', re.I)
+    q = re.compile(''.join([r'<a href="/', dn, r'/([^<>]+?)">\s*([^<>]+?)\s*</a>']), re.I)
     for url, word in q.findall(p.search(ap).group(1)):
         dict[url.strip()] = word
 
@@ -909,18 +969,21 @@ def dl_page(a):
     return ''
 
 
-def makewordlist(file):
+def makewordlist(file, legal):
+    if legal:
+        file = ''.join(['l_', file])
     fp = fullpath(file)
     if path.exists(fp):
         dt = OrderedDict(getwordlist(file))
     else:
         print "Get word list: start at %s" % datetime.now()
         pn = re.compile(r'[\n\r]+')
-        page = dl_page('browse/dictionary/a')
+        dn = 'legal' if legal else 'dictionary'
+        page = dl_page(''.join(['browse/', dn, '/a']))
         p = re.compile(r'<ul class="clearfix">.+?</ul>', re.I)
-        q = re.compile(r'<li\b[^<>]*>\s*<a href="/(browse/dictionary/\w+)">[^<>]+</a>\s*</li>', re.I)
+        q = re.compile(''.join([r'<li\b[^<>]*>\s*<a href="/(browse/', dn, r'/\w+)">[^<>]+</a>\s*</li>']), re.I)
         r = re.compile(r'<ul class="pagination">.+?</ul>', re.I)
-        s = re.compile(r'<li class="last">\s*<a [^<>]*href="/browse/dictionary/\w+/(\d+)">.+?</a>\s*</li>', re.I)
+        s = re.compile(''.join([r'<li class="last">\s*<a [^<>]*href="/browse/', dn, r'/\w+/(\d+)">.+?</a>\s*</li>']), re.I)
         dt = OrderedDict()
         for a in q.findall(p.search(page).group(0)):
             print "\n", a
@@ -930,11 +993,11 @@ def makewordlist(file):
                 last = int(m.group(1))
             else:
                 last = 0
-            getlinks(ap, dt)
+            getlinks(ap, dt, dn)
             for i in xrange(2, last+1):
                 print ".",
                 ap = dl_page(''.join([a, '/', str(i)]))
-                getlinks(ap, dt)
+                getlinks(ap, dt, dn)
         dump(''.join(['\n'.join(['\t'.join([k, v]) for k, v in dt.iteritems()]), '\n']), file)
         print "\nGet word list: finished at %s" % datetime.now()
     print "%s totally" % info(len(dt))
@@ -959,9 +1022,11 @@ if __name__=="__main__":
     argpsr = argparse.ArgumentParser()
     argpsr.add_argument("diff", nargs="?", help="[p] To download missing words \n[f] format only")
     argpsr.add_argument("file", nargs="?", help="[file name] To specify additional wordlist when diff is [p]")
+    argpsr.add_argument("-k", "--kids", help="To localize image files", action="store_true")
+    argpsr.add_argument("-l", "--legal", help="To localize image files", action="store_true")
     args = argpsr.parse_args()
     print "Start at %s" % datetime.now()
-    mwd_dl = mwd_downloader()
+    mwd_dl = mwd_downloader(args)
     dir = ''.join([mwd_dl.DIC_T, path.sep])
     if args.diff == 'f':
         if is_complete(fullpath(dir)):
@@ -971,7 +1036,7 @@ if __name__=="__main__":
     else:
         mwd_dl.login()
         if mwd_dl.session:
-            d_all, base = makewordlist(F_WORDLIST), 0
+            d_all, base = makewordlist(F_WORDLIST, args.legal), 0
             if args.diff=='p':
                 print "Start to download missing words..."
                 wordlist = []
