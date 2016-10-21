@@ -612,6 +612,7 @@ class mwd_downloader(downloader):
         pr = m.group(2)
         p = self.__rex(r'<span class="lig"><span>([^<>]+)</span><span>([^<>]+)</span>([^<>]*)</span>', re.I)
         pr = p.sub(r'\1\2\3', pr)
+        pr = self.__rex(r';\s*').sub(r';<em> </em>', pr)
         return ''.join(['uig', m.group(1), '/', pr, '/'])
 
     def __fmt_illu(self, illu):
@@ -863,12 +864,15 @@ class mwd_downloader(downloader):
                 q = self.__rex(r'(?=<div class="modules clearfix">|$)', re.I)
                 line = q.sub(''.join(['<div', m.group(1), 'div>']), line, 1)
             line = self.__rex(r'<ILLU( class="gmw">.+?</)ILLU>').sub(r'<div\1div>', line)
-        p = self.__rex(r'<h2>Did You Know\??\s*</h2>\s*<div class="card-primary-content def-text">\s*<p>(.+?)</p>\s*</div>', re.I)
+        p = self.__rex(r'<h2>Did You Know\??\s*</h2>\s*<div class="card-primary-content def-text">\s*(.+?</(?:p|blockquote)>)\s*</div>', re.I)
         m = p.search(line)
         if m:
+            note = m.group(1)
             line = p.sub(r'', line)
+            p = self.__rex(r'<blockquote>\s*<p(>.+?</)p>\s*</blockquote>', re.I)
+            note = p.sub(r'<div class="idu"\1div>', note)
             p = self.__rex(r'(?=<div class="das">)', re.I)
-            line, n = p.subn(''.join(['<div class="ptm">', m.group(1), '</div>']), line, 1)
+            line, n = p.subn(''.join(['<div class="ptm">', note, '</div>']), line, 1)
             assert n
         p = re.compile(r'(?<=<img )[^<>]*?src="/(math/)([^<>/"]+)"[^<>]*(?=>)', re.I)
         line = p.sub(lambda m: ''.join([self.__copy_img(m, 'v'), ' class="m1g"']), line)
