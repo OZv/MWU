@@ -20,7 +20,7 @@ em.ozr{font-weight:bold}
 em.wqx{font-family:Helvetica;font-size:90%}
 em.wqx, .yvp{color:teal}
 .mst q{quotes:none;font-family:Helvetica;color:#369}
-.mst cite, .blt, .uig em.j8z{color:dimgray;font-family:Helvetica;font-size:90%}
+.mst cite, .blt, .uig em.j8z, .idu{color:dimgray;font-family:Helvetica;font-size:90%}
 .jyi{font-family:Helvetica;font-size:95%;display:block;margin-left:1em;position:relative}
 .jyi q:before{content:"\021D2\020";color:#FF7E1E;position:absolute;left:-1.1em;font-size:90%}
 .d9d .jyi, .anp .jyi{margin-left:2em}
@@ -52,8 +52,9 @@ em.lfu, em.nqw{color:#1C4B8B;letter-spacing:-1px}
 .dvm div, .gmw div{font-family:Helvetica;color:#666;font-size:85%}
 .gmw img{max-width:280px}
 .gmw{float:right;max-width:290px;border:1px solid #CCC;padding:2px;margin:0 2px 1ex 1ex;position:relative;z-index:999}
-.ptm, .viz p{text-indent:1.2em}
+.ptm p, .viz p{text-indent:1.2em}
 .ptm em, .eqc{color:#090}
+.idu em{color:dimgray}
 .eqc em, .eqc i{font-family:Helvetica}
 .das{color:#5690b1;font-family:Helvetica;font-size:90%;text-transform:uppercase}
 .das:before{content:"\025BA";font-size:85%}
@@ -68,3 +69,4 @@ em.lfu, em.nqw{color:#1C4B8B;letter-spacing:-1px}
 .m1g{display:inline;vertical-align:text-bottom;max-height:1.5em}
 .j8z, .x7u{font-variant:small-caps;font-weight:bold}
 .viz{border:1px dashed gray;margin:.5em 1ex;padding:.5em}
+.idu{margin:.3em auto;width:90%}
